@@ -2,10 +2,16 @@ const express = require("express");
 const puppeteer = require("puppeteer");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const puppeteer = require("puppeteer");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+const browser = await puppeteer.launch({
+  headless: true,
+  executablePath: puppeteer.executablePath(), // Sử dụng chrome từ cache
+});
 
 app.post("/comment", async (req, res) => {
   const { url, name, email, comment } = req.body;
