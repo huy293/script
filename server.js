@@ -12,13 +12,14 @@ app.post("/comment", async (req, res) => {
   const { url, name, email, comment } = req.body;
 
   try {
-    const browser = await chrome.puppeteer.launch({
+    console.log("Launching browser...");
+    const browser = await puppeteer.launch({
       args: chrome.args,
       defaultViewport: chrome.defaultViewport,
       executablePath: await chrome.executablePath,
       headless: chrome.headless,
     });
-
+    console.log("Browser launched successfully.");
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 0 });
 
