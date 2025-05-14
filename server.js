@@ -12,10 +12,11 @@ app.post("/comment", async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: '/usr/bin/google-chrome-stable',  // Đảm bảo đúng đường dẫn tới Chrome trên server
-      args: chrome.args
-    });    
+      args: chrome.args,
+      defaultViewport: chrome.defaultViewport,
+      executablePath: await chrome.executablePath,
+      headless: chrome.headless
+    });
 
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 0 });
