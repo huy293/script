@@ -1,43 +1,24 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const puppeteer = require("puppeteer-core");
+const chrome = require("chrome-aws-lambda");
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-
-const isProduction = process.env.AWS_REGION || process.env.RENDER;
-
-let puppeteer, launchOptions;
-
-async function setupPuppeteer() {
-  if (isProduction) {
-    // Use chrome-aws-lambda when running on Render or AWS
-    puppeteer = require("puppeteer-core");
-    const chrome = require("chrome-aws-lambda");
-
-    launchOptions = {
-      args: chrome.args,
-      defaultViewport: chrome.defaultViewport,
-      executablePath: await chrome.executablePath,  // await inside async function
-      headless: chrome.headless,
-    };
-  } else {
-    // Use puppeteer locally for development
-    puppeteer = require("puppeteer");
-    launchOptions = {
-      headless: true,
-    };
-  }
-}
 
 app.post("/comment", async (req, res) => {
   const { url, name, email, comment } = req.body;
 
   try {
-    // Ensure Puppeteer is set up before launching the browser
-    await setupPuppeteer();
+    const browser = await puppeteer.launch({
+      args: chrome.args,
+      defaultViewport: chrome.defaultViewport,
+      executablePath: await chrome.executablePath,
+      headless: chrome.headless,
+    });
 
-    const browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 0 });
 
@@ -54,7 +35,7 @@ app.post("/comment", async (req, res) => {
 
     return res.json({ status: "Success", message: "Commented successfully" });
   } catch (err) {
-    return res.json({ status: "Error", message: err.message });
+    return res.status(500).json({ status: "Error", message: err.message });
   }
 });
 
