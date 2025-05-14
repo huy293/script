@@ -1,0 +1,14 @@
+# Loại bỏ node_modules
+node_modules/
+
+# Các file log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# .env hoặc file cấu hình bí mật
+.env
+
+# Hệ điều hành (nếu dùng Windows)
+.DS_Store
+Thumbs.db
