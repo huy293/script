@@ -7,20 +7,18 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const browser = await puppeteer.launch({
-  headless: true,
-  executablePath: puppeteer.executablePath(), // Sử dụng chrome từ cache
-});
-
 app.post("/comment", async (req, res) => {
   const { url, name, email, comment } = req.body;
 
   try {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: puppeteer.executablePath(), // Dùng chrome cache sẵn
+    });
+
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 0 });
 
-    // Giả sử các selector dưới đây đúng, cần chỉnh lại tuỳ blog
     await page.type("input[name='author']", name);
     await page.type("input[name='email']", email);
     await page.type("textarea[name='comment']", comment);
@@ -39,5 +37,5 @@ app.post("/comment", async (req, res) => {
 });
 
 app.listen(3000, () => {
-    console.log("Server is running at http://localhost:3000");
-  });
+  console.log("Server is running at http://localhost:3000");
+});
