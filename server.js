@@ -16,8 +16,9 @@ app.post("/comment", async (req, res) => {
       args: chrome.args,
       defaultViewport: chrome.defaultViewport,
       // Sử dụng fallback nếu không tìm thấy đường dẫn của chrome từ chrome-aws-lambda
-      executablePath: process.env.CHROME_EXEC_PATH || await chrome.executablePath || '/usr/bin/google-chrome',
+      executablePath: process.env.CHROME_EXEC_PATH || await chrome.executablePath,
       headless: chrome.headless,
+      enableExtensions: true,
     });
 
     const page = await browser.newPage();
