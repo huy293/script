@@ -1,8 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const puppeteer = require("puppeteer"); // Nếu sử dụng puppeteer-core thì import puppeteer-core
-const chrome = require("chrome-aws-lambda"); // Dành cho môi trường AWS Lambda
+const puppeteer = require("puppeteer-core");
+const chrome = require("chrome-aws-lambda");
 
 const app = express();
 app.use(cors());
@@ -12,23 +12,21 @@ app.post("/comment", async (req, res) => {
   const { url, name, email, comment } = req.body;
 
   try {
-    // Tạo cấu hình để khởi động Puppeteer
     const browser = await puppeteer.launch({
-      args: chrome.args, // Cấu hình args nếu bạn đang sử dụng AWS Lambda hoặc Render
-      defaultViewport: chrome.defaultViewport, // Đảm bảo viewport mặc định
-      executablePath: await chrome.executablePath || "/usr/bin/google-chrome", // Đường dẫn đến trình duyệt Chrome/Chromium
-      headless: chrome.headless, // Đảm bảo Puppeteer chạy headless
+      args: chrome.args,
+      defaultViewport: chrome.defaultViewport,
+      // Sử dụng fallback nếu không tìm thấy đường dẫn của chrome từ chrome-aws-lambda
+      executablePath: process.env.CHROME_EXEC_PATH || await chrome.executablePath || '/usr/bin/google-chrome',
+      headless: chrome.headless,
     });
 
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 0 });
 
-    // Điền thông tin vào các trường input
     await page.type("input[name='author']", name);
     await page.type("input[name='email']", email);
     await page.type("textarea[name='comment']", comment);
 
-    // Gửi comment và đợi điều hướng
     await Promise.all([
       page.click("button[type='submit']"),
       page.waitForNavigation({ waitUntil: "networkidle0" }),
