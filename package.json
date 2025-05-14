@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "puppeteer-core install",
     "start": "node server.js"
   },
   "keywords": [],
@@ -16,6 +17,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "googleapis": "^148.0.0",
+    "puppeteer": "^24.8.2",
     "puppeteer-core": "^10.4.0"
   }
 }
