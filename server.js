@@ -1,81 +1,52 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const puppeteer = require("puppeteer-core");
-const chrome = require("chrome-aws-lambda");
+const puppeteer = require("puppeteer");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Util class để xử lý logic Puppeteer
-class CommentRenderer {
-  constructor(browser) {
-    this.browser = browser;
-  }
-
-  async submitComment(url, name, email, comment) {
-    const page = await this.browser.newPage();
-
-    try {
-      await page.setUserAgent(
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36"
-      );
-
-      await page.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 15000, // hợp lý hơn timeout: 0
-      });
-
-      await page.type("input[name='author']", name);
-      await page.type("input[name='email']", email);
-      await page.type("textarea[name='comment']", comment);
-
-      await Promise.all([
-        page.click("button[type='submit']"),
-        page.waitForNavigation({ waitUntil: "networkidle0", timeout: 15000 }),
-      ]);
-
-      await page.close();
-      return { success: true };
-    } catch (err) {
-      await page.close();
-      return { success: false, message: err.message };
-    }
-  }
-}
-
 app.post("/comment", async (req, res) => {
-  const { url, name, email, comment } = req.body;
+  const { name, email, comment, url, row } = req.body;
 
-  if (!url || !name || !email || !comment) {
+  // Kiểm tra các trường bắt buộc
+  if (!name || !email || !comment || !url) {
     return res.status(400).json({ status: "Error", message: "Missing fields" });
   }
 
-  let browser = null;
+  let browser;
 
   try {
-    browser = await puppeteer.launch({
-      args: chrome.args,
-      defaultViewport: chrome.defaultViewport,
-      executablePath: process.env.CHROME_EXEC_PATH || await chrome.executablePath,
-      headless: chrome.headless,
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    await page.setViewport({ width: 1200, height: 800 });
+
+    // Mở trang web
+    await page.goto(url, {
+      waitUntil: "networkidle0",
+      timeout: 10000,
     });
 
-    const renderer = new CommentRenderer(browser);
-    const result = await renderer.submitComment(url, name, email, comment);
+    // Gõ vào các input comment
+    await page.type("input[name='author']", name);
+    await page.type("input[name='email']", email);
+    await page.type("textarea[name='comment']", comment);
+
+    // Click submit và chờ trang reload
+    await Promise.all([
+      page.click("button[type='submit']"),
+      page.waitForNavigation({ waitUntil: "networkidle0" }),
+    ]);
 
     await browser.close();
 
-    if (!result.success) {
-      return res.status(500).json({ status: "Error", message: result.message });
-    }
+    return res.json({ status: "Success", message: "Commented successfully", row: row });
 
-    return res.json({ status: "Success", message: "Comment submitted successfully" });
   } catch (err) {
     if (browser) await browser.close();
-    console.error("Failed to submit comment:", err);
+    console.error(err);
     return res.status(500).json({ status: "Error", message: err.message });
   }
 });
