@@ -12,7 +12,7 @@ app.post("/comment", async (req, res) => {
   const { url, name, email, comment } = req.body;
 
   try {
-    const browser = await puppeteer.launch({
+    const browser = await chrome.puppeteer.launch({
       args: chrome.args,
       defaultViewport: chrome.defaultViewport,
       executablePath: await chrome.executablePath,
