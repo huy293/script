@@ -7,11 +7,12 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/screenshot', async (req, res) => {
-  const { url } = req.body;
+  const url = req.query.url;
+
   if (!url) return res.status(400).json({ error: 'Missing URL' });
 
   try {
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] }); // nếu chạy trên server cloud thì nên thêm args này
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     await page.setViewport({ width: 1000, height: 500 });
@@ -21,7 +22,6 @@ app.get('/screenshot', async (req, res) => {
 
     await browser.close();
 
-    // Gửi ảnh dưới dạng Buffer (image/png)
     res.writeHead(200, {
       'Content-Type': 'image/png',
       'Content-Length': screenshotBuffer.length,
@@ -32,6 +32,7 @@ app.get('/screenshot', async (req, res) => {
     res.status(500).json({ error: 'Failed to take screenshot' });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
