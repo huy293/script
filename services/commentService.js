@@ -1,46 +1,49 @@
 const puppeteer = require('puppeteer');
 
 async function waitTillHTMLRendered(page, timeout = 30000) {
-    const checkDurationMs = 1000;
-    const maxChecks = timeout / checkDurationMs;
-    let lastHTMLSize = 0;
-    let checkCounts = 0;
-    let stableSizeIterations = 0;
-    const minStableSizeIterations = 3;
-  
-    while (checkCounts < maxChecks) {
-      checkCounts++;
-      const html = await page.content();
-      const currentHTMLSize = html.length;
-  
-      if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
-        stableSizeIterations++;
-      } else {
-        stableSizeIterations = 0;
-      }
-  
-      if (stableSizeIterations >= minStableSizeIterations) {
-        break;
-      }
-  
-      lastHTMLSize = currentHTMLSize;
-      await new Promise(resolve => setTimeout(resolve, checkDurationMs));
+  const checkDurationMs = 1000;
+  const maxChecks = timeout / checkDurationMs;
+  let lastHTMLSize = 0;
+  let checkCounts = 0;
+  let stableSizeIterations = 0;
+  const minStableSizeIterations = 3;
+
+  while (checkCounts < maxChecks) {
+    checkCounts++;
+    const html = await page.content();
+    const currentHTMLSize = html.length;
+
+    if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
+      stableSizeIterations++;
+    } else {
+      stableSizeIterations = 0;
     }
+
+    if (stableSizeIterations >= minStableSizeIterations) {
+      break;
+    }
+
+    lastHTMLSize = currentHTMLSize;
+    await new Promise(resolve => setTimeout(resolve, checkDurationMs));
   }
-  
+}
+
 async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
+    if (!comment || comment.trim() === '') {
+      throw new Error('Trường nội dung bình luận (comment) là bắt buộc');
+    }
+
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      protocolTimeout: 120000, // timeout cho Chrome DevTools Protocol (CDP)
+      protocolTimeout: 120000,
     });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
 
-    // Chặn tải các tài nguyên không cần thiết
     await page.setRequestInterception(true);
     page.on('request', (req) => {
       const blockedTypes = ['image', 'stylesheet', 'font', 'media', 'other'];
@@ -51,39 +54,31 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
-    // Vào trang, chờ DOM sẵn sàng (nhanh hơn networkidle2)
-    await page.goto(url, { waitUntil: 'domcontentloaded'});
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
-    // Scroll tới form input#author
+
     await page.evaluate(() => {
       const el = document.querySelector('input#author');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
-    // Hàm gõ dữ liệu vào trường
-    const safeType = async (selector, value, label) => {
+    // Chỉ nhập nếu có dữ liệu
+    const safeType = async (selector, value) => {
+      if (!value) return;
       const input = await page.$(selector);
-      if (!input) throw new Error(`Không tìm thấy trường ${label}`);
-      await input.click({ clickCount: 3 }); // chọn nội dung cũ
+      if (!input) return;
+      await input.click({ clickCount: 3 });
       await input.type(value);
     };
 
-    await safeType('input#author', author, 'Tên');
-    await safeType('input#email', email, 'Email');
-    await safeType('textarea#comment', comment, 'Nội dung bình luận');
+    await safeType('input#author', author);
+    await safeType('input#email', email);
+    await safeType('textarea#comment', comment);
+    await safeType('input#url', website);
 
-    // Nếu có website, gõ vào input#url
-    const websiteInput = await page.$('input#url');
-    if (websiteInput) {
-      await websiteInput.click({ clickCount: 3 });
-      await websiteInput.type(website);
-    }
-
-    // Tìm nút submit, ưu tiên button#submit, fallback input#submit
     const submitBtn = (await page.$('button#submit')) || (await page.$('input#submit'));
     if (!submitBtn) throw new Error('Không tìm thấy nút submit');
 
-    // Click submit và chờ navigation hoặc timeout nhẹ để tránh chờ lâu
     await Promise.all([
       submitBtn.click(),
       page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
