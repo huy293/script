@@ -37,35 +37,30 @@ app.post('/comment', async (req, res) => {
     await page.setViewport({ width: 1000, height: 700 });
     await page.goto(url, { waitUntil: 'networkidle2' });
 
-   const safeWait = async (selector) => {
-  try {
-    await page.waitForSelector(selector, { visible: true, timeout: 5000 });
-    return true;
-  } catch {
-    return false;
-  }
-};
+    const safeType = async (selector, value, label) => {
+      const found = await page.$(selector);
+      if (!found) throw new Error(`Không tìm thấy trường ${label}`);
+      await page.type(selector, value);
+    };
 
-  if (await safeWait('input#author')) await page.type('input#author', author);
-  if (await safeWait('input#email')) await page.type('input#email', email);
-  if (await safeWait('textarea#comment')) await page.type('textarea#comment', comment);
-  if (await safeWait('input#url')) await page.type('input#url', website);
+    await safeType('input#author', author, 'Tên');
+    await safeType('input#email', email, 'Email');
+    await safeType('textarea#comment', comment, 'Nội dung bình luận');
 
+    const websiteField = await page.$('input#url');
+    if (websiteField) {
+      await page.type('input#url', website);
+    }
 
     // Click submit
-    const clicked = 
-      (await page.$('button#submit')) 
-        ? page.click('button#submit') 
-        : (await page.$('input#submit')) 
-          ? page.click('input#submit') 
-          : null;
+    let submitButton = await page.$('button#submit');
+    if (!submitButton) submitButton = await page.$('input#submit');
+    if (!submitButton) throw new Error('Không tìm thấy nút submit');
 
-    if (clicked) {
-      await Promise.all([
-        clicked,
-        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
-      ]);
-    }
+    await Promise.all([
+      submitButton.click(),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+    ]);
 
 
     await browser.close();
