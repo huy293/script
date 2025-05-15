@@ -1,5 +1,33 @@
 const puppeteer = require('puppeteer');
 
+async function waitTillHTMLRendered(page, timeout = 30000) {
+    const checkDurationMs = 1000;
+    const maxChecks = timeout / checkDurationMs;
+    let lastHTMLSize = 0;
+    let checkCounts = 0;
+    let stableSizeIterations = 0;
+    const minStableSizeIterations = 3;
+  
+    while (checkCounts < maxChecks) {
+      checkCounts++;
+      const html = await page.content();
+      const currentHTMLSize = html.length;
+  
+      if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
+        stableSizeIterations++;
+      } else {
+        stableSizeIterations = 0;
+      }
+  
+      if (stableSizeIterations >= minStableSizeIterations) {
+        break;
+      }
+  
+      lastHTMLSize = currentHTMLSize;
+      await new Promise(resolve => setTimeout(resolve, checkDurationMs));
+    }
+  }
+  
 async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
@@ -24,8 +52,8 @@ async function postComment({ url, author, email, comment, website }) {
     });
 
     // Vào trang, chờ DOM sẵn sàng (nhanh hơn networkidle2)
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
+    await page.goto(url, { waitUntil: 'domcontentloaded'});
+    await waitTillHTMLRendered(page, 30000);
     // Scroll tới form input#author
     await page.evaluate(() => {
       const el = document.querySelector('input#author');
