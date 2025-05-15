@@ -35,12 +35,20 @@ app.post('/comment', async (req, res) => {
     await page.setViewport({ width: 1000, height: 700 });
     await page.goto(url, { waitUntil: 'networkidle2' });
 
-    // Chờ các trường hiện lên
-    await page.waitForSelector('input#author', { visible: true, timeout: 0 });
-    await page.waitForSelector('input#email', { visible: true, timeout: 0 });
-    await page.waitForSelector('textarea#comment', { visible: true, timeout: 0 });
-    await page.waitForSelector('input#url', { visible: true, timeout: 0 });
-    await page.waitForSelector('button#submit', { visible: true, timeout: 0 });
+    const safeWait = async (selector) => {
+      try {
+        await page.waitForSelector(selector, { visible: true, timeout: 5000 });
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    
+    if (await safeWait('input#author')) await page.type('input#author', author);
+    if (await safeWait('input#email')) await page.type('input#email', email);
+    if (await safeWait('textarea#comment')) await page.type('textarea#comment', comment);
+    if (await safeWait('input#url')) await page.type('input#url', website);
+    
 
     // Điền form
     await page.type('input#author', author);
