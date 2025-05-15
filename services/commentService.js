@@ -9,7 +9,10 @@ async function postComment({ url, author, email, comment, website }) {
     });
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.goto(url, {
+        waitUntil: 'networkidle2',
+        timeout: 60000
+      });
 
     // Cuộn đến phần tử form (input#author)
     await page.evaluate(() => {
