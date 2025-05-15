@@ -60,7 +60,7 @@ app.post('/comment', async (req, res) => {
     res.json({ status: 'success', message: 'Comment posted successfully' });
   } catch (error) {
     if (browser) await browser.close();
-    console.error('Comment error:', error);
+    console.error('comment error:', error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
