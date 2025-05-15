@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 app.post('/comment', async (req, res) => {
-  const { url, author, email, comment } = req.body;
+  const { url, author, email, comment, website } = req.body;
   if (!url || !author || !email || !comment) {
     return res.status(400).json({ error: 'Missing required fields: url, author, email, comment' });
   }
@@ -36,22 +36,23 @@ app.post('/comment', async (req, res) => {
     await page.goto(url, { waitUntil: 'networkidle2' });
 
     // Chờ các trường hiện lên
-    await page.waitForSelector('input#author', { visible: true, timeout: 5000 });
-    await page.waitForSelector('input#email', { visible: true, timeout: 5000 });
-    await page.waitForSelector('textarea#comment', { visible: true, timeout: 5000 });
-    await page.waitForSelector('button#submit', { visible: true, timeout: 5000 });
+    await page.waitForSelector('input#author', { visible: true, timeout: 0 });
+    await page.waitForSelector('input#email', { visible: true, timeout: 0 });
+    await page.waitForSelector('textarea#comment', { visible: true, timeout: 0 });
+    await page.waitForSelector('input#url', { visible: true, timeout: 0 });
+    await page.waitForSelector('button#submit', { visible: true, timeout: 0 });
 
     // Điền form
     await page.type('input#author', author);
     await page.type('input#email', email);
     await page.type('textarea#comment', comment);
-
+    await page.type('input#url', website);
     // Submit form và chờ navigation (hoặc chờ phần tử xác nhận xuất hiện)
     // Click submit
     await Promise.all([
       page.click('button#submit'),
       // Nếu submit có chuyển trang, dùng waitForNavigation, nếu không thì comment dòng này đi
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 0 }).catch(() => {}),
     ]);
 
     await browser.close();
