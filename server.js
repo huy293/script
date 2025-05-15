@@ -36,7 +36,7 @@ app.post('/comment', async (req, res) => {
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 });
+    await page.goto(url, { waitUntil: 'networkidle2'});
 
     // Cố gắng điền từng trường nếu có (không throw nếu không thấy)
     const safeType = async (selector, value, label) => {
