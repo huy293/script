@@ -12,7 +12,7 @@ app.get('/screenshot', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      executablePath: '/opt/render/.cache/puppeteer/chrome/linux-136.0.7103.92/chrome-linux64/chrome',
+      executablePath: puppeteer.executablePath(),
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
