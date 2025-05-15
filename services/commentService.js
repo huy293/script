@@ -11,6 +11,14 @@ async function postComment({ url, author, email, comment, website }) {
     await page.setViewport({ width: 1000, height: 700 });
     await page.goto(url, { waitUntil: 'networkidle2' });
 
+    // Cuộn đến phần tử form (input#author)
+    await page.evaluate(() => {
+      const element = document.querySelector('input#author');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
     const safeType = async (selector, value, label) => {
       const found = await page.$(selector);
       if (!found) throw new Error(`Không tìm thấy trường ${label}`);
