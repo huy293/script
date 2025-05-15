@@ -21,8 +21,10 @@ app.post('/comment', async (req, res) => {
     }
   };
   if (!validUrl(url)) {
-    return res.status(400).json({ status: 'error', message: 'Invalid URL' });
+    console.log("Invalid URL detected:", url);  // In ra server console
+    return res.status(400).json({ status: 'error', message: 'Invalid URL', urlReceived: url });
   }
+  
 
   let browser;
   try {
