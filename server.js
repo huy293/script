@@ -6,32 +6,40 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/screenshot', async (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).json({ error: 'Missing URL' });
+app.post('/comment', async (req, res) => {
+  const { url, author, email, comment } = req.body;
+  if (!url || !author || !email || !comment) {
+    return res.status(400).json({ error: 'Missing required fields: url, name, email, comment' });
+  }
 
+  let browser;
   try {
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
-    
 
     const page = await browser.newPage();
-    await page.setViewport({ width: 1000, height: 500 });
+    await page.setViewport({ width: 1000, height: 700 });
     await page.goto(url, { waitUntil: 'networkidle2' });
 
-    const screenshotBuffer = await page.screenshot();
+
+    await page.type('input[name="author"]', author);
+    await page.type('input[name="email"]', email);
+    await page.type('textarea[name="comment"]', comment);
+
+    await Promise.all([
+      page.click('button[type="submit"]'),
+      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    ]);
 
     await browser.close();
-    res.writeHead(200, {
-      'Content-Type': 'image/png',
-      'Content-Length': screenshotBuffer.length,
-    });
-    res.end(screenshotBuffer);
+
+    res.json({ status: 'success', message: 'Comment posted successfully' });
   } catch (error) {
-    console.error('Screenshot error:', error); // 👈 Xem log chi tiết
-    res.status(500).json({ error: 'Failed to take screenshot', detail: error.message });
+    if (browser) await browser.close();
+    console.error('Comment error:', error);
+    res.status(500).json({ status: 'error', message: error.message });
   }
 });
 
