@@ -8,7 +8,6 @@ app.use(express.json());
 
 app.post('/comment', async (req, res) => {
   const { url, author, email, comment, website } = req.body;
-
   if (!url || !author || !email || !comment) {
     return res.status(400).json({ error: 'Missing required fields: url, author, email, comment' });
   }
@@ -21,11 +20,11 @@ app.post('/comment', async (req, res) => {
       return false;
     }
   };
-
   if (!validUrl(url)) {
-    console.log("Invalid URL detected:", url);
+    console.log("Invalid URL detected:", url);  // In ra server console
     return res.status(400).json({ status: 'error', message: 'Invalid URL', urlReceived: url });
   }
+  
 
   let browser;
   try {
@@ -36,42 +35,45 @@ app.post('/comment', async (req, res) => {
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
-    await page.goto(url, { waitUntil: 'networkidle2'});
+    await page.goto(url, { waitUntil: 'networkidle2' });
 
-    // Cố gắng điền từng trường nếu có (không throw nếu không thấy)
-    const safeType = async (selector, value, label) => {
-      try {
-        await page.waitForSelector(selector, { visible: true, timeout: 15000 });
-        await page.type(selector, value);
-      } catch {
-        console.warn(`⚠️ Không tìm thấy trường ${label}, bỏ qua.`);
-      }
-    };
+   const safeWait = async (selector) => {
+  try {
+    await page.waitForSelector(selector, { visible: true, timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
-    await safeType('input#author', author, 'Tên');
-    await safeType('input#email', email, 'Email');
-    await safeType('textarea#comment', comment, 'Nội dung bình luận');
+  if (await safeWait('input#author')) await page.type('input#author', author);
+  if (await safeWait('input#email')) await page.type('input#email', email);
+  if (await safeWait('textarea#comment')) await page.type('textarea#comment', comment);
+  if (await safeWait('input#url')) await page.type('input#url', website);
 
-    if (website) await safeType('input#url', website, 'Website');
 
-    // Tìm nút submit
-    let submitButton = await page.$('button#submit');
-    if (!submitButton) submitButton = await page.$('input#submit');
+    // Click submit
+    const clicked = 
+      (await page.$('button#submit')) 
+        ? page.click('button#submit') 
+        : (await page.$('input#submit')) 
+          ? page.click('input#submit') 
+          : null;
 
-    if (!submitButton) {
-      throw new Error('Không tìm thấy nút submit');
+    if (clicked) {
+      await Promise.all([
+        clicked,
+        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+      ]);
     }
 
-    await Promise.all([
-      submitButton.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
-    ]);
 
     await browser.close();
+
     res.json({ status: 'success', message: 'Comment posted successfully' });
   } catch (error) {
     if (browser) await browser.close();
-    console.error('Comment error:', error.message);
+    console.error('comment error:', error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
