@@ -51,11 +51,20 @@ app.post('/comment', async (req, res) => {
 
 
     // Click submit
-    await Promise.all([
-      page.click('button#submit'),
-      // Nếu submit có chuyển trang, dùng waitForNavigation, nếu không thì comment dòng này đi
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 0 }).catch(() => {}),
-    ]);
+    const clicked = 
+      (await page.$('button#submit')) 
+        ? page.click('button#submit') 
+        : (await page.$('input#submit')) 
+          ? page.click('input#submit') 
+          : null;
+
+    if (clicked) {
+      await Promise.all([
+        clicked,
+        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+      ]);
+    }
+
 
     await browser.close();
 
