@@ -35,28 +35,23 @@ app.post('/comment', async (req, res) => {
     await page.setViewport({ width: 1000, height: 700 });
     await page.goto(url, { waitUntil: 'networkidle2' });
 
-    // Chờ các trường input hiện lên và sẵn sàng thao tác
-    await page.waitForSelector('input[name="author"]', { visible: true, timeout: 5000 });
-    await page.waitForSelector('input[name="email"]', { visible: true, timeout: 5000 });
-    await page.waitForSelector('textarea[name="comment"]', { visible: true, timeout: 5000 });
-    await page.waitForSelector('button[type="submit"]', { visible: true, timeout: 5000 });
+    // Chờ các trường hiện lên
+    await page.waitForSelector('input#author', { visible: true, timeout: 5000 });
+    await page.waitForSelector('input#email', { visible: true, timeout: 5000 });
+    await page.waitForSelector('textarea#comment', { visible: true, timeout: 5000 });
+    await page.waitForSelector('button#submit', { visible: true, timeout: 5000 });
 
-    // Gõ dữ liệu vào form
-    await page.focus('input[name="author"]');
-    await page.keyboard.type(author);
-
-    await page.focus('input[name="email"]');
-    await page.keyboard.type(email);
-
-    await page.focus('textarea[name="comment"]');
-    await page.keyboard.type(comment);
+    // Điền form
+    await page.type('input#author', author);
+    await page.type('input#email', email);
+    await page.type('textarea#comment', comment);
 
     // Submit form và chờ navigation (hoặc chờ phần tử xác nhận xuất hiện)
+    // Click submit
     await Promise.all([
-      page.click('button[type="submit"]'),
+      page.click('button#submit'),
+      // Nếu submit có chuyển trang, dùng waitForNavigation, nếu không thì comment dòng này đi
       page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
-      // Nếu không có navigation thì thay bằng chờ một phần tử xác nhận có thể có
-      // ví dụ: await page.waitForSelector('.success-message', { timeout: 10000 })
     ]);
 
     await browser.close();
