@@ -11,11 +11,15 @@ app.get('/screenshot', async (req, res) => {
   if (!url) return res.status(400).json({ error: 'Missing URL' });
 
   try {
+    const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
+    console.log('Using Chrome executable at:', chromePath);
+
     const browser = await puppeteer.launch({
-      executablePath: puppeteer.executablePath(),
+      executablePath: chromePath,
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
+
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 500 });
     await page.goto(url, { waitUntil: 'networkidle2' });
