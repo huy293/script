@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/screenshot', async (req, res) => {
+app.get('/screenshot', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'Missing URL' });
 
