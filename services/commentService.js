@@ -6,15 +6,27 @@ async function postComment({ url, author, email, comment, website }) {
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      protocolTimeout: 60000 // Tăng thời gian timeout của Chrome protocol
     });
+
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
-    await page.goto(url, {
-        waitUntil: 'networkidle2',
-        timeout: 60000
-      });
 
-    // Cuộn đến phần tử form (input#author)
+    // Chặn các tài nguyên không cần thiết để tăng tốc
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const type = req.resourceType();
+      const blocked = ['image', 'stylesheet', 'font', 'media', 'other'];
+      if (blocked.includes(type)) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+    // Cuộn tới form
     await page.evaluate(() => {
       const element = document.querySelector('input#author');
       if (element) {
@@ -22,10 +34,12 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
+    // Điền form
     const safeType = async (selector, value, label) => {
       const found = await page.$(selector);
       if (!found) throw new Error(`Không tìm thấy trường ${label}`);
-      await page.type(selector, value);
+      await found.click({ clickCount: 3 }); // chọn toàn bộ nội dung cũ nếu có
+      await found.type(value);
     };
 
     await safeType('input#author', author, 'Tên');
@@ -33,21 +47,25 @@ async function postComment({ url, author, email, comment, website }) {
     await safeType('textarea#comment', comment, 'Nội dung bình luận');
 
     const websiteField = await page.$('input#url');
-    if (websiteField) await page.type('input#url', website);
+    if (websiteField) {
+      await websiteField.click({ clickCount: 3 });
+      await websiteField.type(website);
+    }
 
-    let submitButton = await page.$('button#submit') || await page.$('input#submit');
+    const submitButton = await page.$('button#submit') || await page.$('input#submit');
     if (!submitButton) throw new Error('Không tìm thấy nút submit');
 
+    // Gửi form và chờ phản hồi hoặc timeout nhẹ
     await Promise.all([
       submitButton.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {})
     ]);
 
     await browser.close();
     return { status: 'success', message: 'Comment posted successfully' };
   } catch (error) {
     if (browser) await browser.close();
-    throw error;
+    return { status: 'error', message: error.message };
   }
 }
 
