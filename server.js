@@ -12,7 +12,6 @@ app.get('/screenshot', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      executablePath: '/usr/bin/chromium-browser', // hoặc path Chrome bạn đã cài
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
