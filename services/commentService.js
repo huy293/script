@@ -31,10 +31,6 @@ async function waitTillHTMLRendered(page, timeout = 30000) {
 async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
-    if (!comment || comment.trim() === '') {
-      throw new Error('Trường nội dung bình luận (comment) là bắt buộc');
-    }
-
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -58,11 +54,19 @@ async function postComment({ url, author, email, comment, website }) {
     await waitTillHTMLRendered(page, 30000);
 
     await page.evaluate(() => {
-      const el = document.querySelector('input#author');
+      const el = document.querySelector('textarea#comment');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
-    // Chỉ nhập nếu có dữ liệu
+    // Bắt buộc phải có textarea#comment
+    const commentField = await page.$('textarea#comment');
+    if (!commentField) {
+      throw new Error('Không tìm thấy trường comment');
+    }
+    await commentField.click({ clickCount: 3 });
+    await commentField.type(comment);
+
+    // Không bắt buộc các trường còn lại
     const safeType = async (selector, value) => {
       if (!value) return;
       const input = await page.$(selector);
@@ -73,7 +77,6 @@ async function postComment({ url, author, email, comment, website }) {
 
     await safeType('input#author', author);
     await safeType('input#email', email);
-    await safeType('textarea#comment', comment);
     await safeType('input#url', website);
 
     const submitBtn = (await page.$('button#submit')) || (await page.$('input#submit'));
@@ -81,7 +84,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await Promise.all([
       submitBtn.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {})
     ]);
 
     await browser.close();
