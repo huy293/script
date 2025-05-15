@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
-#exit on error
-set -o errexit
 
-#Install dependencies
+set -o errexit  # Dừng script khi có lỗi
+
+# Cài đặt dependencies
 npm install
 
-#Uncomment this line if you need to build your project
-#npm run build
-#Ensure the Puppeteer cache directory exists
+# Nếu cần build dự án thì bỏ comment dòng này
+# npm run build
+
+# Đảm bảo thư mục cache của Puppeteer tồn tại
 PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer
 mkdir -p $PUPPETEER_CACHE_DIR
 
-#Install Puppeteer and download Chrome
+# Cài Puppeteer và tải Chrome
 npx puppeteer browsers install chrome
 
-#Store/pull Puppeteer cache with build cache
-if [[ ! -d $PUPPETEER_CACHE_DIR ]]; then
-echo "...Copying Puppeteer Cache from Build Cache"
-# Copying from the actual path where Puppeteer stores its Chrome binary
-cp -R /opt/render/project/src/.cache/puppeteer/chrome/ $PUPPETEER_CACHE_DIR
-else
+# Tạo thư mục đích nếu chưa có
+DEST_CACHE_DIR=/opt/render/project/src/.cache/puppeteer/chrome
+mkdir -p $DEST_CACHE_DIR
+
+# Lưu cache Puppeteer vào build cache
 echo "...Storing Puppeteer Cache in Build Cache"
-cp -R $PUPPETEER_CACHE_DIR /opt/render/project/src/.cache/puppeteer/chrome/
-fi
+cp -R $PUPPETEER_CACHE_DIR/chrome/ $DEST_CACHE_DIR
