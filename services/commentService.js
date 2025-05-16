@@ -34,7 +34,7 @@ async function postComment({ url, author, email, comment, website }) {
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      protocolTimeout: 60000,
+      protocolTimeout: 120000,
     });
 
     const page = await browser.newPage();
