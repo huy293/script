@@ -47,7 +47,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await page.setRequestInterception(true);
     page.on('request', req => {
-      const blockedTypes = ['image', 'stylesheet', 'font', 'media'];
+      const blockedTypes = ['image', 'font', 'media'];
       if (blockedTypes.includes(req.resourceType())) {
         req.abort();
       } else {
