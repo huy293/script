@@ -55,8 +55,15 @@ async function postComment({ url, author, email, comment, website }) {
 
     await page.evaluate(() => {
       const el = document.querySelector('textarea#comment');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (el) {
+        // Nếu tìm thấy textarea thì cuộn đến nó
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        // Nếu không thấy thì cuộn xuống cuối trang
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
     });
+    
 
     // Bắt buộc phải có textarea#comment
     const commentField = await page.$('textarea#comment');
