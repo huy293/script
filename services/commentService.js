@@ -19,9 +19,7 @@ async function waitTillHTMLRendered(page, timeout = 30000) {
       stableSizeIterations = 0;
     }
 
-    if (stableSizeIterations >= minStableSizeIterations) {
-      break;
-    }
+    if (stableSizeIterations >= minStableSizeIterations) break;
 
     lastHTMLSize = currentHTMLSize;
     await new Promise(resolve => setTimeout(resolve, checkDurationMs));
@@ -43,14 +41,12 @@ async function postComment({ url, author, email, comment, website }) {
       ],
       ignoreHTTPSErrors: true,
     });
-    
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
 
     await page.setRequestInterception(true);
     page.on('request', req => {
-      const url = req.url();
       const blockedTypes = ['image', 'stylesheet', 'font', 'media'];
       if (blockedTypes.includes(req.resourceType())) {
         req.abort();
@@ -59,35 +55,50 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
-
-
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
 
     await page.evaluate(() => {
+      // Xoá toàn bộ thẻ <a>
       document.querySelectorAll('a').forEach(el => el.remove());
-      const comments = document.querySelectorAll('li.comment, div.comment, article.comment-body');
-      comments.forEach(c => c.remove());
+
+      // Xoá các phần tử liên quan đến comment hoặc phản hồi
+      const selectorsToRemove = [
+        'li.comment',
+        'div.comment',
+        'article.comment-body',
+        '.comment',
+        '.comment-content',
+        '.comment-author',
+        '.comment-meta',
+        '.comment-metadata',
+        '.media.comment',
+        '.media-body',
+        '.avatar',
+        '#comments',
+        '.reply',
+        'iframe',
+      ];
+      selectorsToRemove.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => el.remove());
+      });
+
+      // Cuộn đến form comment nếu có
       const el = document.querySelector('textarea#comment');
       if (el) {
-        // Nếu tìm thấy textarea thì cuộn đến nó
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
-        // Nếu không thấy thì cuộn xuống cuối trang
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       }
     });
-    
 
     // Bắt buộc phải có textarea#comment
     const commentField = await page.$('textarea#comment');
-    if (!commentField) {
-      throw new Error('Không tìm thấy trường comment');
-    }
+    if (!commentField) throw new Error('Không tìm thấy trường comment');
     await commentField.click({ clickCount: 3 });
     await commentField.type(comment);
 
-    // Không bắt buộc các trường còn lại
+    // Gõ các trường thông tin nếu có
     const safeType = async (selector, value) => {
       if (!value) return;
       const input = await page.$(selector);
@@ -105,7 +116,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await Promise.all([
       submitBtn.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {})
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {})
     ]);
 
     await browser.close();
