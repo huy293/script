@@ -51,13 +51,14 @@ async function postComment({ url, author, email, comment, website }) {
     await page.setRequestInterception(true);
     page.on('request', req => {
       const url = req.url();
-      const blockedTypes = ['image', 'stylesheet', 'font', 'media', 'other'];
+      const blockedTypes = ['image', 'stylesheet', 'font', 'media', 'script']; // thêm 'script' vào đây
       if (blockedTypes.includes(req.resourceType()) || url.includes('comment')) {
         req.abort();
       } else {
         req.continue();
       }
     });
+
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
