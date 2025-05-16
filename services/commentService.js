@@ -33,8 +33,17 @@ async function postComment({ url, author, email, comment, website }) {
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote',
+        '--disable-gpu',
+      ],
+      ignoreHTTPSErrors: true,
     });
+    
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
