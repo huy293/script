@@ -57,12 +57,14 @@ async function postComment({ url, author, email, comment, website }) {
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
-
+    
+    // 1. Xoá <a>
     await page.evaluate(() => {
-      // Xoá toàn bộ thẻ <a>
       document.querySelectorAll('a').forEach(el => el.remove());
-
-      // Xoá các phần tử liên quan đến comment hoặc phản hồi
+    });
+    
+    // 2. Xoá các phần tử liên quan đến comment (trừ iframe)
+    await page.evaluate(() => {
       const selectorsToRemove = [
         'li.comment',
         'div.comment',
@@ -74,21 +76,23 @@ async function postComment({ url, author, email, comment, website }) {
         '.media.comment',
         '.media-body',
         '.avatar',
-        '.reply',
-        'iframe',
+        '.reply'
       ];
       selectorsToRemove.forEach(selector => {
         document.querySelectorAll(selector).forEach(el => el.remove());
       });
-
-      // Cuộn đến form comment nếu có
+    });
+    
+    // 3. Cuộn hoặc focus nhẹ
+    await page.evaluate(() => {
       const el = document.querySelector('textarea#comment');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
       } else {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        window.scrollTo({ top: document.body.scrollHeight });
       }
     });
+    
 
     // Bắt buộc phải có textarea#comment
     const commentField = await page.$('textarea#comment');
