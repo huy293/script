@@ -67,7 +67,6 @@ async function postComment({ url, author, email, comment, website }) {
         'li.comment',
         'div.comment',
         'article.comment-body',
-        '.comment',
         '.comment-content',
         '.comment-author',
         '.comment-meta',
@@ -75,7 +74,6 @@ async function postComment({ url, author, email, comment, website }) {
         '.media.comment',
         '.media-body',
         '.avatar',
-        '#comments',
         '.reply',
         'iframe',
       ];
