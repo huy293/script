@@ -34,7 +34,6 @@ async function postComment({ url, author, email, comment, website }) {
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      protocolTimeout: 120000,
     });
 
     const page = await browser.newPage();
@@ -93,7 +92,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await Promise.all([
       submitBtn.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {})
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {})
     ]);
 
     await browser.close();
