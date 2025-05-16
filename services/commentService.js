@@ -51,8 +51,8 @@ async function postComment({ url, author, email, comment, website }) {
     await page.setRequestInterception(true);
     page.on('request', req => {
       const url = req.url();
-      const blockedTypes = ['image', 'stylesheet', 'font', 'media', 'script']; // thêm 'script' vào đây
-      if (blockedTypes.includes(req.resourceType()) || url.includes('comment')) {
+      const blockedTypes = ['image', 'stylesheet', 'font', 'media'];
+      if (blockedTypes.includes(req.resourceType())) {
         req.abort();
       } else {
         req.continue();
@@ -60,12 +60,15 @@ async function postComment({ url, author, email, comment, website }) {
     });
 
 
+
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
 
     await page.evaluate(() => {
+      document.querySelectorAll('a').forEach(el => el.remove());
+      const comments = document.querySelectorAll('li.comment, div.comment, article.comment-body');
+      comments.forEach(c => c.remove());
       const el = document.querySelector('textarea#comment');
-      document.querySelectorAll('article.comment-body').forEach(el => el.remove());
       if (el) {
         // Nếu tìm thấy textarea thì cuộn đến nó
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
