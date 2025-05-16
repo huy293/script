@@ -41,9 +41,10 @@ async function postComment({ url, author, email, comment, website }) {
     await page.setViewport({ width: 1000, height: 700 });
 
     await page.setRequestInterception(true);
-    page.on('request', (req) => {
+    page.on('request', req => {
+      const url = req.url();
       const blockedTypes = ['image', 'stylesheet', 'font', 'media', 'other'];
-      if (blockedTypes.includes(req.resourceType())) {
+      if (blockedTypes.includes(req.resourceType()) || url.includes('comment')) {
         req.abort();
       } else {
         req.continue();
@@ -55,6 +56,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await page.evaluate(() => {
       const el = document.querySelector('textarea#comment');
+      document.querySelectorAll('article.comment-body').forEach(el => el.remove());
       if (el) {
         // Nếu tìm thấy textarea thì cuộn đến nó
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
