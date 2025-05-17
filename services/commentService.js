@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 
-async function waitTillHTMLRendered(page, timeout = 30000) {
+async function waitTillHTMLRendered(page, timeout = 60000) {
   const checkDurationMs = 1000;
   const maxChecks = timeout / checkDurationMs;
   let lastHTMLSize = 0;
