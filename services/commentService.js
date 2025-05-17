@@ -66,18 +66,6 @@ async function waitForStableElement(page, selector, timeout = 10000, stableTimeM
   }
   throw new Error('Element không ổn định trong thời gian chờ');
 }
-
-// Chặn sự kiện unload/reload page để tránh bị detached frame khi submit
-async function preventPageUnload(page) {
-  await page.evaluate(() => {
-    window.addEventListener('beforeunload', event => {
-      event.preventDefault();
-      event.returnValue = '';
-      return '';
-    }, { capture: true });
-  });
-}
-
 async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
@@ -171,7 +159,7 @@ async function postComment({ url, author, email, comment, website }) {
       await submitBtn.focus();             // Focus vào nút submit
       await Promise.all([
         page.keyboard.press('Enter'),     // Nhấn Enter để submit
-        page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
       ]);
     } catch (error) {
       console.warn('Chuyển hướng có thể gặp lỗi hoặc quá chậm:', error.message);
