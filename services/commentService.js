@@ -173,10 +173,16 @@ async function postComment({ url, author, email, comment, website }) {
     await preventPageUnload(page);
 
     // Click submit và chờ navigation, bắt lỗi timeout nếu có
-    await Promise.all([
-      submitBtn.evaluate(el => el.click()),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => { })
-    ]);
+    try {
+      await Promise.all([
+        submitBtn.click(),
+        page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }),
+      ]);
+    } catch (error) {
+      // Có thể frame bị detached hoặc timeout khi đợi chuyển trang
+      console.warn('Chuyển hướng có thể gặp lỗi hoặc quá chậm:', error.message);
+      // Nếu cần, bạn có thể xử lý lại hoặc bỏ qua tùy trường hợp
+    }
 
     await browser.close();
     return { status: 'success', message: 'Comment posted successfully' };
