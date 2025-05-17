@@ -58,32 +58,25 @@ async function postComment({ url, author, email, comment, website }) {
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
 
-    // 1. Xoá <a>
+    // Xoá <a>
     await page.evaluate(() => {
       document.querySelectorAll('a').forEach(el => el.remove());
     });
 
-    // 2. Xoá các phần tử liên quan đến comment (trừ iframe)
+    // Xoá phần tử liên quan đến comment
     await page.evaluate(() => {
-      const selectorsToRemove = [
-        'li.comment',
-        'div.comment',
-        'article.comment-body',
-        '.comment-content',
-        '.comment-author',
-        '.comment-meta',
-        '.comment-metadata',
-        '.media.comment',
-        '.media-body',
-        '.avatar',
-        '.reply'
+      const selectors = [
+        'li.comment', 'div.comment', 'article.comment-body',
+        '.comment-content', '.comment-author', '.comment-meta',
+        '.comment-metadata', '.media.comment', '.media-body',
+        '.avatar', '.reply'
       ];
-      selectorsToRemove.forEach(selector => {
+      selectors.forEach(selector => {
         document.querySelectorAll(selector).forEach(el => el.remove());
       });
     });
 
-    // 3. Cuộn hoặc focus nhẹ
+    // Cuộn hoặc focus vào ô comment
     await page.evaluate(() => {
       const el = document.querySelector('textarea#comment');
       if (el) {
@@ -93,26 +86,27 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
-
-    // Bắt buộc phải có textarea#comment
+    // Nhập nội dung comment
     const commentField = await page.$('textarea#comment');
     if (!commentField) throw new Error('Không tìm thấy trường comment');
     await commentField.click({ clickCount: 3 });
     await commentField.type(comment);
 
-    // Gõ các trường thông tin nếu có
+    // Nhập các trường thông tin
     const safeType = async (selector, value) => {
       if (!value) return;
       const input = await page.$(selector);
-      if (!input) return;
-      await input.click({ clickCount: 3 });
-      await input.type(value);
+      if (input) {
+        await input.click({ clickCount: 3 });
+        await input.type(value);
+      }
     };
 
     await safeType('input#author', author);
     await safeType('input#email', email);
     await safeType('input#url', website);
 
+    // Tìm và click nút submit
     const submitBtn = (await page.$('button#submit')) || (await page.$('input#submit'));
     if (!submitBtn) throw new Error('Không tìm thấy nút submit');
 
@@ -123,6 +117,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await browser.close();
     return { status: 'success', message: 'Comment posted successfully' };
+
   } catch (error) {
     if (browser) await browser.close();
     return { status: 'error', message: error.message };
