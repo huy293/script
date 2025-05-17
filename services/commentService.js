@@ -82,12 +82,11 @@ async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--single-process',
         '--no-zygote',
         '--disable-gpu',
       ],
