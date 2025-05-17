@@ -38,6 +38,8 @@ async function postComment({ url, author, email, comment, website }) {
         '--single-process',
         '--no-zygote',
         '--disable-gpu',
+        '--disable-features=HttpsFirstBalancedModeAutoEnable',
+        '--disable-features=site-per-process',
       ],
       ignoreHTTPSErrors: true,
     });
