@@ -76,7 +76,7 @@ async function postComment({ url, author, email, comment, website }) {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-      ],
+      ],protocolTimeout: 120000,
       ignoreHTTPSErrors: true,
     });
 
