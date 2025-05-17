@@ -120,8 +120,8 @@ async function postComment({ url, author, email, comment, website }) {
 
     await Promise.all([
       submitBtn.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {}),
-      await page.waitForTimeout(3000),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }).catch(() => {}),
+      await page.waitForTimeout(10000),
     ]);
 
     await browser.close();
