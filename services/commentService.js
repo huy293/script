@@ -94,7 +94,7 @@ async function postComment({ url, author, email, comment, website }) {
       });
 
 
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await waitTillHTMLRendered(page, 120000);
 
     // Focus hoặc cuộn tới textarea comment
