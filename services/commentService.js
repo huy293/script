@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 
-async function waitTillHTMLRendered(page, timeout = 60000) {
+async function waitTillHTMLRendered(page, timeout = 30000) {
   const checkDurationMs = 1000;
   const maxChecks = timeout / checkDurationMs;
   let lastHTMLSize = 0;
@@ -57,12 +57,12 @@ async function postComment({ url, author, email, comment, website }) {
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
-    
+
     // 1. Xoá <a>
     await page.evaluate(() => {
       document.querySelectorAll('a').forEach(el => el.remove());
     });
-    
+
     // 2. Xoá các phần tử liên quan đến comment (trừ iframe)
     await page.evaluate(() => {
       const selectorsToRemove = [
@@ -82,7 +82,7 @@ async function postComment({ url, author, email, comment, website }) {
         document.querySelectorAll(selector).forEach(el => el.remove());
       });
     });
-    
+
     // 3. Cuộn hoặc focus nhẹ
     await page.evaluate(() => {
       const el = document.querySelector('textarea#comment');
@@ -92,7 +92,7 @@ async function postComment({ url, author, email, comment, website }) {
         window.scrollTo({ top: document.body.scrollHeight });
       }
     });
-    
+
 
     // Bắt buộc phải có textarea#comment
     const commentField = await page.$('textarea#comment');
@@ -118,8 +118,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await Promise.all([
       submitBtn.click(),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }).catch(() => {}),
-      page.waitForTimeout(10000),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => { })
     ]);
 
     await browser.close();
