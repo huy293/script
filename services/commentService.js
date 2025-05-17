@@ -87,7 +87,6 @@ async function postComment({ url, author, email, comment, website }) {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--no-zygote',
         '--disable-gpu',
       ],
       ignoreHTTPSErrors: true,
