@@ -70,7 +70,7 @@ async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -84,42 +84,18 @@ async function postComment({ url, author, email, comment, website }) {
     await page.setViewport({ width: 1000, height: 700 });
 
     await page.setRequestInterception(true);
-    page.on('request', req => {
-      const blockedTypes = ['image', 'font', 'media'];
-      if (blockedTypes.includes(req.resourceType())) {
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
+      page.on('request', req => {
+        const blockedTypes = ['image', 'font', 'media', 'stylesheet', 'script', 'manifest', 'ping'];
+        if (blockedTypes.includes(req.resourceType())) {
+          req.abort();
+        } else {
+          req.continue();
+        }
+      });
+
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await waitTillHTMLRendered(page, 30000);
-
-    // Xoá tất cả thẻ <a>
-    await page.evaluate(() => {
-      document.querySelectorAll('a').forEach(el => el.remove());
-    });
-
-    // Xoá các phần tử comment để tránh trùng lặp
-    await page.evaluate(() => {
-      const selectorsToRemove = [
-        'li.comment',
-        'div.comment',
-        'article.comment-body',
-        '.comment-content',
-        '.comment-author',
-        '.comment-meta',
-        '.comment-metadata',
-        '.media.comment',
-        '.media-body',
-        '.avatar',
-        '.reply'
-      ];
-      selectorsToRemove.forEach(selector => {
-        document.querySelectorAll(selector).forEach(el => el.remove());
-      });
-    });
 
     // Focus hoặc cuộn tới textarea comment
     await page.evaluate(() => {
@@ -131,29 +107,36 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
-    // Kiểm tra textarea#comment tồn tại
-    const commentField = await page.$('textarea#comment');
-    if (!commentField) throw new Error('Không tìm thấy trường comment');
+    // Xóa và gán nhanh comment
+await page.evaluate((comment) => {
+  const el = document.querySelector('textarea#comment');
+  if (el) {
+    el.value = '';
+    el.value = comment;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}, comment);
 
-    // Xoá rồi nhập comment
-    await commentField.click({ clickCount: 3 });
-    await commentField.type(comment);
+const safeSetValue = async (selector, value) => {
+  if (!value) return;
+  await page.evaluate((sel, val) => {
+    const el = document.querySelector(sel);
+    if (el) {
+      el.value = '';
+      el.value = val;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }, selector, value);
+};
 
-    // Hàm gõ dữ liệu cho input nếu có
-    const safeType = async (selector, value) => {
-      if (!value) return;
-      const input = await page.$(selector);
-      if (!input) return;
-      await input.click({ clickCount: 3 });
-      await input.type(value);
-    };
-
-    await safeType('input#author', author);
-    await safeType('input#email', email);
-    await safeType('input#url', website);
+await safeSetValue('input#author', author);
+await safeSetValue('input#email', email);
+await safeSetValue('input#url', website);
 
     // Chờ nút submit ổn định
-    const submitBtn = await waitForStableElement(page, 'button#submit, input#submit', 15000);
+    const submitBtn = await waitForStableElement(page, 'button#submit, input#submit', 3000);
 
     try {
       await submitBtn.focus();             // Focus vào nút submit
