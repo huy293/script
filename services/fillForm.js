@@ -9,14 +9,14 @@ async function fillForm(page, { author, email, comment, website }) {
         try {
           console.log(`[fillForm] Lần ${i}: Chờ selector textarea#comment`);
         //   await page.waitForSelector('textarea#comment', { timeout: 10000 });
-        //   console.log(`[fillForm] Lần ${i}: Tìm thấy textarea#comment, chuẩn bị điền giá trị`);
-        //   await page.evaluate((val) => {
-        //     const el = document.querySelector('textarea#comment');
-        //     if (!el || el.disabled || el.readOnly) throw new Error('textarea#comment không hợp lệ');
-        //     el.value = val;
-        //     el.dispatchEvent(new Event('input', { bubbles: true }));
-        //     el.dispatchEvent(new Event('change', { bubbles: true }));
-        //   }, comment);
+          console.log(`[fillForm] Lần ${i}: Tìm thấy textarea#comment, chuẩn bị điền giá trị`);
+          await page.evaluate((val) => {
+            const el = document.querySelector('textarea#comment');
+            if (!el || el.disabled || el.readOnly) throw new Error('textarea#comment không hợp lệ');
+            el.value = val;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }, comment);
           console.log(`[fillForm] Lần ${i}: Đã điền giá trị vào textarea#comment`);
           foundComment = true;
           break;
