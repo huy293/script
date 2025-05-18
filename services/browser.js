@@ -3,15 +3,21 @@ const puppeteer = require('puppeteer');
 async function launchBrowser() {
   try {
     return await puppeteer.launch({
-      headless: true, // Hoặc 'new' nếu hỗ trợ
+      headless: new, // Hoặc 'new' nếu hỗ trợ
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
         '--disable-gpu',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--window-size=1920,1080',
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-notifications',
       ],
       timeout: 60000,          // Giảm timeout để tránh chờ quá lâu
       protocolTimeout: 120000,  // Tăng nhẹ protocolTimeout nếu Railway yếu
