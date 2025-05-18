@@ -7,7 +7,9 @@ async function fillForm(page, { author, email, comment, website }) {
       let lastError = null;
       for (let i = 1; i <= 3; i++) {
         try {
+          console.log(`[fillForm] Lần ${i}: Chờ selector textarea#comment`);
           await page.waitForSelector('textarea#comment', { timeout: 10000 });
+          console.log(`[fillForm] Lần ${i}: Tìm thấy textarea#comment, chuẩn bị điền giá trị`);
           await page.evaluate((val) => {
             const el = document.querySelector('textarea#comment');
             if (!el || el.disabled || el.readOnly) throw new Error('textarea#comment không hợp lệ');
@@ -15,25 +17,31 @@ async function fillForm(page, { author, email, comment, website }) {
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
           }, comment);
+          console.log(`[fillForm] Lần ${i}: Đã điền giá trị vào textarea#comment`);
           foundComment = true;
           break;
         } catch (e) {
           lastError = e;
-          console.log(`[fillForm] Lần ${i} chưa tìm thấy textarea#comment hoặc lỗi, sẽ cuộn xuống cuối trang và thử lại`);
+          console.log(`[fillForm] Lần ${i}: Lỗi hoặc không tìm thấy textarea#comment: ${e.message}`);
+          console.log(`[fillForm] Lần ${i}: Cuộn xuống cuối trang và thử lại`);
           await page.evaluate(() => {
-            window.scrollTo(0, docsument.body.scrolslHeight);
+            window.scrollTo(0, document.body.scrollHeight);
           });
-          console.log('Đợi 500ms trước khi thử lại');
+          console.log('[fillForm] Đợi 500ms trước khi thử lại');
           await page.waitForTimeout(500);
         }
       }
   
-      if (!foundComment) throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message}`);
+      if (!foundComment) {
+        throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message}`);
+      }
   
       // Điền input#author (không bắt buộc)
       if (author) {
         try {
+          console.log('[fillForm] Chờ selector input#author');
           await page.waitForSelector('input#author', { timeout: 5000 });
+          console.log('[fillForm] Tìm thấy input#author, chuẩn bị điền giá trị');
           await page.evaluate((val) => {
             const el = document.querySelector('input#author');
             if (!el || el.disabled || el.readOnly) throw new Error('input#author không hợp lệ');
@@ -41,6 +49,7 @@ async function fillForm(page, { author, email, comment, website }) {
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
           }, author);
+          console.log('[fillForm] Đã điền giá trị vào input#author');
         } catch (e) {
           console.warn(`[fillForm] Lỗi khi điền input#author: ${e.message} — bỏ qua`);
         }
@@ -49,7 +58,9 @@ async function fillForm(page, { author, email, comment, website }) {
       // Điền input#email (không bắt buộc)
       if (email) {
         try {
+          console.log('[fillForm] Chờ selector input#email');
           await page.waitForSelector('input#email', { timeout: 5000 });
+          console.log('[fillForm] Tìm thấy input#email, chuẩn bị điền giá trị');
           await page.evaluate((val) => {
             const el = document.querySelector('input#email');
             if (!el || el.disabled || el.readOnly) throw new Error('input#email không hợp lệ');
@@ -57,6 +68,7 @@ async function fillForm(page, { author, email, comment, website }) {
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
           }, email);
+          console.log('[fillForm] Đã điền giá trị vào input#email');
         } catch (e) {
           console.warn(`[fillForm] Lỗi khi điền input#email: ${e.message} — bỏ qua`);
         }
@@ -65,8 +77,10 @@ async function fillForm(page, { author, email, comment, website }) {
       // Điền input#url nếu có (không bắt buộc)
       if (website) {
         try {
+          console.log('[fillForm] Kiểm tra tồn tại input#url');
           const hasWebsite = await page.$('input#url');
           if (hasWebsite) {
+            console.log('[fillForm] Tìm thấy input#url, chuẩn bị điền giá trị');
             await page.waitForSelector('input#url', { timeout: 5000 });
             await page.evaluate((val) => {
               const el = document.querySelector('input#url');
@@ -75,6 +89,7 @@ async function fillForm(page, { author, email, comment, website }) {
               el.dispatchEvent(new Event('input', { bubbles: true }));
               el.dispatchEvent(new Event('change', { bubbles: true }));
             }, website);
+            console.log('[fillForm] Đã điền giá trị vào input#url');
           } else {
             console.warn('[fillForm] Không tìm thấy input#url — bỏ qua');
           }
