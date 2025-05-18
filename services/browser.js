@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 async function launchBrowser() {
   try {
     return await puppeteer.launch({
-      headless: new, // Hoặc 'new' nếu hỗ trợ
+      headless: 'new', // Hoặc 'new' nếu hỗ trợ
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
