@@ -22,6 +22,7 @@ async function waitTillHTMLRendered(page, timeout = 15000) {
       stableCount = 0;
       lastHTMLSize = currentHTMLSize;
     }
+
     await wait(checkInterval);
   }
 }
@@ -73,9 +74,16 @@ async function postComment({ url, author, email, comment, website }) {
 
   try {
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox'],
-      ignoreHTTPSErrors: true
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+      ],
+      protocolTimeout: 60000,
+      timeout: 60000
     });
 
     const page = await browser.newPage();
@@ -83,7 +91,7 @@ async function postComment({ url, author, email, comment, website }) {
 
     await page.setRequestInterception(true);
     page.on('request', req => {
-      const blocked = ['image', 'stylesheet', 'font', 'media', 'script'];
+      const blocked = ['image', 'stylesheet', 'font', 'media'];
       if (blocked.includes(req.resourceType())) {
         req.abort();
       } else {
@@ -94,6 +102,7 @@ async function postComment({ url, author, email, comment, website }) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await waitTillHTMLRendered(page);
 
+    // Điền nội dung bình luận
     await page.evaluate((comment) => {
       const el = document.querySelector('textarea#comment');
       if (el) {
@@ -103,6 +112,7 @@ async function postComment({ url, author, email, comment, website }) {
       }
     }, comment);
 
+    // Điền thông tin người dùng
     const safeSet = async (selector, value) => {
       if (!value) return;
       await page.evaluate((sel, val) => {
@@ -119,12 +129,13 @@ async function postComment({ url, author, email, comment, website }) {
     await safeSet('input#email', email);
     await safeSet('input#url', website);
 
+    // Chờ và submit
     const submitBtn = await waitForStableElement(page, 'button#submit, input#submit');
     await submitBtn.focus();
 
     await Promise.all([
       page.keyboard.press('Enter'),
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => { }),
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {})
     ]);
 
     return { status: 'success', message: 'Đăng bình luận thành công' };
