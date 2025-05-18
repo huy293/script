@@ -2,12 +2,24 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
-  async function scrollToBottom(page) {
-    for (let i = 0; i < 5; i++) {
-      await page.keyboard.press('End');
-      await delay(500);
-    }
+  async function autoScroll(page) {
+    await page.evaluate(async () => {
+      await new Promise((resolve) => {
+        let totalHeight = 0;
+        const distance = 100;
+        const timer = setInterval(() => {
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+  
+          if (totalHeight >= document.body.scrollHeight) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
+    });
   }
+  
   
   async function fillInput(page, selector, value, name) {
     try {
@@ -42,10 +54,10 @@ function delay(ms) {
       for (let i = 1; i <= 3; i++) {
         try {
           console.log(`[fillForm] Lần ${i}: Cuộn xuống cuối trang trước khi tìm textarea`);
-          await scrollToBottom(page);
+          await autoScroll(page);
   
           console.log(`[fillForm] Lần ${i}: Chờ textarea#comment xuất hiện (visible)`);
-          await page.waitForSelector('textarea#comment', { timeout: 10000, visible: true });
+          await page.waitForSelector('textarea#comment', { timeout: 30000, visible: true });
   
           const commentInput = await page.$('textarea#comment');
           if (commentInput) {
