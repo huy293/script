@@ -5,8 +5,9 @@ async function fillForm(page, { author, email, comment, website }) {
       const setInputValue = async (selector, value, isRequired = false) => {
         if (!value) {
           if (isRequired) throw new Error(`${selector} là trường bắt buộc nhưng không có giá trị`);
-          else return; // không có value thì bỏ qua
+          else return; // Không có value thì bỏ qua
         }
+  
         try {
           await page.waitForSelector(selector, { timeout: 10000 });
   
@@ -59,16 +60,17 @@ async function fillForm(page, { author, email, comment, website }) {
           await page.waitForTimeout(500);
         }
       }
+  
       if (!foundComment) throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message}`);
   
       // Các trường còn lại không bắt buộc
-      await setInputValue('input#author', author, false);
-      await setInputValue('input#email', email, false);
+      await setInputValue('input#author', author);
+      await setInputValue('input#email', email);
   
       if (website) {
         const hasWebsite = await page.$('input#url');
         if (hasWebsite) {
-          await setInputValue('input#url', website, false);
+          await setInputValue('input#url', website);
         } else {
           console.warn('[fillForm] Không tìm thấy input#url — bỏ qua');
         }
@@ -76,8 +78,9 @@ async function fillForm(page, { author, email, comment, website }) {
   
       console.log('[fillForm] Điền form xong');
     } catch (error) {
-      console.error('[fillForm] Lỗi:', error.message);
-      throw new Error(`[fillForm.js] Lỗi khi điền form: ${error.message}`);
+      const errorMessage = `[fillForm.js] Lỗi khi điền form: ${error.message}`;
+      console.error(errorMessage); // ✅ Ghi log để Railway hoặc server bắt được
+      throw new Error(errorMessage);
     }
   }
   
