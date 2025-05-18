@@ -71,12 +71,6 @@ function delay(ms) {
           await delay(500);
         }
       }
-  
-      if (!foundComment) {
-        await page.screenshot({ path: `error_comment_not_found_${Date.now()}.png`, fullPage: true });
-        throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message}`);
-      }
-  
       if (author) await fillInput(page, 'input#author', author, 'input#author');
       if (email) await fillInput(page, 'input#email', email, 'input#email');
       if (website) await fillInput(page, 'input#url', website, 'input#url');
