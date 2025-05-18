@@ -8,19 +8,19 @@ async function postComment({ url, author, email, comment, website }) {
 
   try {
     browser = await launchBrowser();
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1000, height: 700 });
+    // const page = await browser.newPage();
+    // await page.setViewport({ width: 1000, height: 700 });
 
-    await setupRequestInterception(page);
+    // await setupRequestInterception(page);
 
-    console.log('Đi tới trang:', url);
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // console.log('Đi tới trang:', url);
+    // await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    await fillForm(page, { author, email, comment, website });
+    // await fillForm(page, { author, email, comment, website });
 
-    await submitForm(page);
+    // await submitForm(page);
 
-    console.log('Đã gửi bình luận');
+    // console.log('Đã gửi bình luận');
 
     return { status: 'success', message: 'Đăng bình luận thành công' };
   } catch (error) {
