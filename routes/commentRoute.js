@@ -21,7 +21,7 @@ router.post('/comment', async (req, res) => {
   }
 });
 router.get('/', async (req, res) => {
-  const url = "https://www.vivoglobal.ph/vivo-origin-os/";
+  const url = req.query.url;
   const author = "Nguyen Van A";
   const email = "a@gmail.com";
   const comment = "Test comment";

@@ -11,14 +11,14 @@ async function postComment({ url, author, email, comment, website }) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
-    const html = await page.content();
-    console.log('[DEBUG HTML]', html.slice(0, 1000)); // chỉ in phần đầu
+    
 
     await setupRequestInterception(page);
 
     console.log('Đi tới trang:', url);
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
+    const html = await page.content();
+    console.log('[DEBUG HTML]', html.slice(0, 1000)); // chỉ in phần đầu
     await fillForm(page, { author, email, comment, website });
 
     await submitForm(page);
