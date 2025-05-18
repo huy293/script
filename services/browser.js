@@ -1,5 +1,7 @@
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer-extra');
+
 const chromium = require('chromium');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
 async function launchBrowser() {
   try {
@@ -9,11 +11,18 @@ async function launchBrowser() {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
+        '--disable-gpu',
         '--disable-dev-shm-usage',
-        '--mute-audio',
         '--no-first-run',
         '--no-default-browser-check',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
       ],
+      
       timeout: 60000,
       protocolTimeout: 120000,
     });
