@@ -8,6 +8,18 @@ function delay(ms) {
       await delay(delayMs);
     }
   }
+  async function waitForCommentTextarea(page, timeout = 30000, interval = 500) {
+    const maxTime = Date.now() + timeout;
+    while (Date.now() < maxTime) {
+      const found = await page.evaluate(() => {
+        const el = document.querySelector('textarea#comment');
+        return el && el.offsetHeight > 0 && !el.disabled;
+      });
+      if (found) return true;
+      await delay(interval);
+    }
+    throw new Error('Timeout: textarea#comment không hiển thị hoặc bị disabled');
+  }
   
   async function fillInput(page, selector, value, name) {
     try {
@@ -44,10 +56,8 @@ function delay(ms) {
           console.log(`[fillForm] Lần ${i}: Cuộn xuống cuối trang trước khi tìm textarea`);
           await autoScroll(page);
           console.log(`[fillForm] Lần ${i}: Đợi textarea#comment hiển thị (offsetHeight > 0, không disabled)`);
-          await page.waitForFunction(() => {
-            const el = document.querySelector('textarea#comment');
-            return el && el.offsetHeight > 0 && !el.disabled;
-          }, { timeout: 30000 });
+          await waitForCommentTextarea(page);
+
           console.log(`[fillForm] Lần ${i}: Chờ textarea#comment xuất hiện (visible)`);
           await page.waitForSelector('textarea#comment', { timeout: 30000, visible: true });
   
