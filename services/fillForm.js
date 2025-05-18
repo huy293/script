@@ -2,25 +2,29 @@ async function fillForm(page, { author, email, comment, website }) {
     try {
       console.log('[fillForm] Bắt đầu điền form');
   
-      // Helper: điền giá trị vào trường input bằng page.type (ổn định hơn evaluate)
+      // Helper điền input với check element trước
       const typeInputValue = async (selector, value, errorMsg) => {
         if (!value) return;
         try {
-          const el = await page.$(selector);
-          if (!el) throw new Error(errorMsg);
-          await page.focus(selector); // đảm bảo focus trước khi gõ
-          await page.type(selector, value, { delay: 30 });
+          await page.waitForSelector(selector, { timeout: 10000 });
+          const isDisabledOrReadOnly = await page.$eval(selector, el => el.disabled || el.readOnly);
+          if (isDisabledOrReadOnly) throw new Error(`${selector} bị disabled hoặc readonly`);
+          await page.focus(selector);
+          await page.click(selector, { clickCount: 3 }); // chọn hết để overwrite text cũ
+          await page.type(selector, value, { delay: 10 });
         } catch (e) {
           throw new Error(`[typeInputValue] Lỗi với selector "${selector}": ${e.message}`);
         }
       };
   
-      // Check và điền comment
+      // Điền comment (textarea)
       try {
-        const hasComment = await page.$('textarea#comment');
-        if (!hasComment) throw new Error('Không tìm thấy textarea#comment');
+        await page.waitForSelector('textarea#comment', { timeout: 10000 });
+        const isDisabledOrReadOnly = await page.$eval('textarea#comment', el => el.disabled || el.readOnly);
+        if (isDisabledOrReadOnly) throw new Error('textarea#comment bị disabled hoặc readonly');
         await page.focus('textarea#comment');
-        await page.type('textarea#comment', comment, { delay: 30 });
+        await page.click('textarea#comment', { clickCount: 3 });
+        await page.type('textarea#comment', comment, { delay: 10 });
       } catch (e) {
         throw new Error(`[fillForm - comment] ${e.message}`);
       }
@@ -50,3 +54,4 @@ async function fillForm(page, { author, email, comment, website }) {
   }
   
   module.exports = fillForm;
+  
