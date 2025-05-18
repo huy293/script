@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const validUrl = require('../utils/urlValidator');
-const postComment = require('../services/commentService');
+const postComment = require('../services/postComment');
 
 router.post('/comment', async (req, res) => {
   const { url, author, email, comment, website } = req.body;
