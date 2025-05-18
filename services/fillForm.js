@@ -2,14 +2,12 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
-  async function autoScroll(page, times = 20, delay = 500) {
+  async function autoScroll(page, times = 20, delayMs = 500) {
     for (let i = 0; i < times; i++) {
       await page.keyboard.press('PageDown');
-      await page.waitForTimeout(delay);
+      await page.waitForTimeout(delayMs);
     }
   }
-  
-  
   
   async function fillInput(page, selector, value, name) {
     try {
@@ -45,31 +43,31 @@ function delay(ms) {
         try {
           console.log(`[fillForm] Lần ${i}: Cuộn xuống cuối trang trước khi tìm textarea`);
           await autoScroll(page);
+  
+          console.log(`[fillForm] Lần ${i}: Đợi textarea#comment hiển thị (offsetHeight > 0, không disabled)`);
           await page.waitForFunction(() => {
             const el = document.querySelector('textarea#comment');
             return el && el.offsetHeight > 0 && !el.disabled;
           }, { timeout: 30000 });
-          
+  
           console.log(`[fillForm] Lần ${i}: Chờ textarea#comment xuất hiện (visible)`);
-          await page.waitForSelector('textarea#comment', { timeout: 30000, visible: true });
+          await page.waitForSelector('textarea#comment', { timeout: 5000, visible: true });
   
           const commentInput = await page.$('textarea#comment');
-          if (commentInput) {
-            await commentInput.focus();
+          if (!commentInput) throw new Error('Không tìm thấy textarea#comment');
   
-            await page.keyboard.down('Control');
-            await page.keyboard.press('A');
-            await page.keyboard.up('Control');
+          await commentInput.focus();
   
-            await page.keyboard.press('Backspace');
+          await page.keyboard.down('Control');
+          await page.keyboard.press('A');
+          await page.keyboard.up('Control');
   
-            await commentInput.type(comment, { delay: 50 });
-            console.log(`[fillForm] Lần ${i}: Đã điền textarea#comment`);
-            foundComment = true;
-            break;
-          } else {
-            throw new Error('Không tìm thấy textarea#comment');
-          }
+          await page.keyboard.press('Backspace');
+  
+          await commentInput.type(comment, { delay: 50 });
+          console.log(`[fillForm] Lần ${i}: Đã điền textarea#comment`);
+          foundComment = true;
+          break;
         } catch (e) {
           lastError = e;
           console.warn(`[fillForm] Lần ${i}: ${e.message}`);
@@ -77,6 +75,11 @@ function delay(ms) {
           await delay(500);
         }
       }
+  
+      if (!foundComment) {
+        throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message || ''}`);
+      }
+  
       if (author) await fillInput(page, 'input#author', author, 'input#author');
       if (email) await fillInput(page, 'input#email', email, 'input#email');
       if (website) await fillInput(page, 'input#url', website, 'input#url');
