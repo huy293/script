@@ -10,6 +10,7 @@ async function postComment({ url, author, email, comment, website }) {
     browser = await launchBrowser();
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
 
     await setupRequestInterception(page);
 

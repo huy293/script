@@ -10,7 +10,6 @@ function delay(ms) {
       await submitBtn.focus();
       await submitBtn.click();
   
-      await delay(5000);
     } catch (error) {
       throw new Error(`[submitForm.js] Lỗi khi submit form: ${error.message}`);
     }
