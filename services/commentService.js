@@ -14,22 +14,21 @@ async function postComment({ url, author, email, comment, website }) {
         '--disable-gpu',
       ],
       timeout: 120000,
-      protocolTimeout: 120000,
+      protocolTimeout: 360000,
     });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
 
-    // Comment tạm thời đoạn setRequestInterception để test
-    // await page.setRequestInterception(true);
-    // page.on('request', req => {
-    //   const blocked = ['image', 'stylesheet', 'font', 'media', 'script'];
-    //   if (blocked.includes(req.resourceType())) {
-    //     req.abort();
-    //   } else {
-    //     req.continue();
-    //   }
-    // });
+    await page.setRequestInterception(true);
+    page.on('request', req => {
+      const blocked = ['image', 'stylesheet', 'font', 'media', 'script'];
+      if (blocked.includes(req.resourceType())) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
 
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
