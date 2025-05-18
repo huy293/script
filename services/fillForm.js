@@ -2,23 +2,13 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
-  async function autoScroll(page) {
-    await page.evaluate(async () => {
-      await new Promise((resolve) => {
-        let totalHeight = 0;
-        const distance = 100;
-        const timer = setInterval(() => {
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-  
-          if (totalHeight >= document.body.scrollHeight) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 100);
-      });
-    });
+  async function autoScroll(page, times = 20, delay = 500) {
+    for (let i = 0; i < times; i++) {
+      await page.keyboard.press('PageDown');
+      await page.waitForTimeout(delay);
+    }
   }
+  
   
   
   async function fillInput(page, selector, value, name) {
