@@ -1,9 +1,11 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium = require('chromium');
 
 async function launchBrowser() {
   try {
     return await puppeteer.launch({
-      headless: true, // Hoặc 'new' nếu hỗ trợ
+      executablePath: chromium.path,
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -19,8 +21,8 @@ async function launchBrowser() {
         '--no-default-browser-check',
         '--disable-notifications',
       ],
-      timeout: 60000,          // Giảm timeout để tránh chờ quá lâu
-      protocolTimeout: 120000,  // Tăng nhẹ protocolTimeout nếu Railway yếu
+      timeout: 60000,
+      protocolTimeout: 120000,
     });
   } catch (error) {
     throw new Error(`[browser.js] Lỗi khi khởi tạo browser: ${error.message}`);

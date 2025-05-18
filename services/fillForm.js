@@ -1,3 +1,6 @@
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 async function fillForm(page, { author, email, comment, website }) {
     try {
       console.log('[fillForm] Bắt đầu điền form');
@@ -8,12 +11,14 @@ async function fillForm(page, { author, email, comment, website }) {
   
       for (let i = 1; i <= 3; i++) {
         try {
-          console.log(`[fillForm] Lần ${i}: Tìm textarea#comment`);
+          console.log(`[fillForm] Lần ${i}: Chờ textarea#comment xuất hiện`);
+          await page.waitForSelector('textarea#comment', { timeout: 3000 });
           const commentInput = await page.$('textarea#comment');
   
           if (commentInput) {
-            await commentInput.click({ clickCount: 3 });
-            await commentInput.type(comment, { delay: 10 });
+            await commentInput.focus();
+            await page.evaluate(el => el.value = '', commentInput);
+            await commentInput.type(comment, { delay: 50 });
             console.log(`[fillForm] Lần ${i}: Đã điền giá trị vào textarea#comment`);
             foundComment = true;
             break;
@@ -25,7 +30,8 @@ async function fillForm(page, { author, email, comment, website }) {
           console.warn(`[fillForm] Lần ${i}: ${e.message}`);
           console.log('[fillForm] Cuộn xuống cuối trang và đợi 500ms trước khi thử lại');
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-          await page.waitForTimeout(500);
+          await delay(500);
+
         }
       }
   
@@ -33,56 +39,29 @@ async function fillForm(page, { author, email, comment, website }) {
         throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message}`);
       }
   
-      // Điền input#author (không bắt buộc)
-      if (author) {
+      // Hàm helper điền input text
+      async function fillInput(selector, value, name) {
         try {
-          console.log('[fillForm] Tìm input#author');
-          const authorInput = await page.$('input#author');
-          if (authorInput) {
-            await authorInput.click({ clickCount: 3 });
-            await authorInput.type(author, { delay: 10 });
-            console.log('[fillForm] Đã điền giá trị vào input#author');
+          console.log(`[fillForm] Chờ ${selector}`);
+          await page.waitForSelector(selector, { timeout: 3000 });
+          const input = await page.$(selector);
+          if (input) {
+            await input.focus();
+            await page.evaluate(el => el.value = '', input);
+            await input.type(value, { delay: 50 });
+            console.log(`[fillForm] Đã điền giá trị vào ${name}`);
           } else {
-            console.warn('[fillForm] Không tìm thấy input#author — bỏ qua');
+            console.warn(`[fillForm] Không tìm thấy ${name} — bỏ qua`);
           }
         } catch (e) {
-          console.warn(`[fillForm] Lỗi khi điền input#author: ${e.message} — bỏ qua`);
+          console.warn(`[fillForm] Lỗi khi điền ${name}: ${e.message} — bỏ qua`);
         }
       }
   
-      // Điền input#email (không bắt buộc)
-      if (email) {
-        try {
-          console.log('[fillForm] Tìm input#email');
-          const emailInput = await page.$('input#email');
-          if (emailInput) {
-            await emailInput.click({ clickCount: 3 });
-            await emailInput.type(email, { delay: 10 });
-            console.log('[fillForm] Đã điền giá trị vào input#email');
-          } else {
-            console.warn('[fillForm] Không tìm thấy input#email — bỏ qua');
-          }
-        } catch (e) {
-          console.warn(`[fillForm] Lỗi khi điền input#email: ${e.message} — bỏ qua`);
-        }
-      }
-  
-      // Điền input#url (không bắt buộc)
-      if (website) {
-        try {
-          console.log('[fillForm] Tìm input#url');
-          const websiteInput = await page.$('input#url');
-          if (websiteInput) {
-            await websiteInput.click({ clickCount: 3 });
-            await websiteInput.type(website, { delay: 10 });
-            console.log('[fillForm] Đã điền giá trị vào input#url');
-          } else {
-            console.warn('[fillForm] Không tìm thấy input#url — bỏ qua');
-          }
-        } catch (e) {
-          console.warn(`[fillForm] Lỗi khi điền input#url: ${e.message} — bỏ qua`);
-        }
-      }
+      // Điền các input không bắt buộc
+      if (author) await fillInput('input#author', author, 'input#author');
+      if (email) await fillInput('input#email', email, 'input#email');
+      if (website) await fillInput('input#url', website, 'input#url');
   
       console.log('[fillForm] Điền form xong');
     } catch (error) {
