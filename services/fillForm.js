@@ -8,13 +8,13 @@ async function fillForm(page, { author, email, comment, website }) {
       for (let i = 1; i <= 3; i++) {
         try {
           await page.waitForSelector('textarea#comment', { timeout: 10000 });
-          await page.evaluate((val) => {
-            const el = document.querySelector('textarea#comment');
-            if (!el || el.disabled || el.readOnly) throw new Error('textarea#comment không hợp lệ');
-            el.value = val;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-          }, comment);
+        //   await page.evaluate((val) => {
+        //     const el = document.querySelector('textarea#comment');
+        //     if (!el || el.disabled || el.readOnly) throw new Error('textarea#comment không hợp lệ');
+        //     el.value = val;
+        //     el.dispatchEvent(new Event('input', { bubbles: true }));
+        //     el.dispatchEvent(new Event('change', { bubbles: true }));
+        //   }, comment);
           foundComment = true;
           break;
         } catch (e) {
