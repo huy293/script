@@ -45,7 +45,11 @@ function delay(ms) {
         try {
           console.log(`[fillForm] Lần ${i}: Cuộn xuống cuối trang trước khi tìm textarea`);
           await autoScroll(page);
-            
+          console.log(`[fillForm] Lần ${i}: Đợi textarea#comment hiển thị (offsetHeight > 0, không disabled)`);
+          await page.waitForFunction(() => {
+            const el = document.querySelector('textarea#comment');
+            return el && el.offsetHeight > 0 && !el.disabled;
+          }, { timeout: 30000 });
           console.log(`[fillForm] Lần ${i}: Chờ textarea#comment xuất hiện (visible)`);
           await page.waitForSelector('textarea#comment', { timeout: 30000, visible: true });
   
