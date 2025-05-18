@@ -16,18 +16,18 @@ async function postComment({ url, author, email, comment, website }) {
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
-        '--window-size=1920,1080'
       ],
-      protocolTimeout: 60000,
-      timeout: 60000
+      timeout: 60000,        // 60s timeout khi khởi tạo browser
+      protocolTimeout: 60000 // timeout giao thức cũng 60s
     });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
 
+    // Chặn các request tài nguyên không cần thiết để tiết kiệm tài nguyên
     await page.setRequestInterception(true);
     page.on('request', req => {
-      const blocked = ['image', 'stylesheet', 'font', 'media'];
+      const blocked = ['image', 'stylesheet', 'font', 'media', 'script'];
       if (blocked.includes(req.resourceType())) {
         req.abort();
       } else {
@@ -35,7 +35,7 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
     // Điền nội dung bình luận
     await page.evaluate((comment) => {
@@ -47,7 +47,7 @@ async function postComment({ url, author, email, comment, website }) {
       }
     }, comment);
 
-    // Điền thông tin người dùng
+    // Hàm điền thông tin input an toàn
     const safeSet = async (selector, value) => {
       if (!value) return;
       await page.evaluate((sel, val) => {
@@ -64,18 +64,16 @@ async function postComment({ url, author, email, comment, website }) {
     await safeSet('input#email', email);
     await safeSet('input#url', website);
 
-    // Nhấn nút submit
+    // Lấy nút submit (có thể là button hoặc input) và submit form
     const submitBtn = await page.$('button#submit, input#submit');
-    if (submitBtn) {
-      await submitBtn.focus();
+    if (!submitBtn) throw new Error('Không tìm thấy nút submit');
 
-      await Promise.all([
-        page.keyboard.press('Enter'),
-        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {})
-      ]);
-    } else {
-      throw new Error('Không tìm thấy nút Submit');
-    }
+    await submitBtn.focus();
+
+    await Promise.all([
+      submitBtn.click(),
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {})
+    ]);
 
     return { status: 'success', message: 'Đăng bình luận thành công' };
   } catch (error) {
