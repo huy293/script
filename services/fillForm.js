@@ -1,7 +1,8 @@
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-async function fillForm(page, { author, email, comment, website }) {
+  
+  async function fillForm(page, { author, email, comment, website }) {
     try {
       console.log('[fillForm] Bắt đầu điền form');
   
@@ -17,7 +18,11 @@ async function fillForm(page, { author, email, comment, website }) {
   
           if (commentInput) {
             await commentInput.focus();
-            await page.evaluate(el => el.value = '', commentInput);
+  
+            // Xóa nội dung cũ: chọn hết rồi xóa
+            await commentInput.click({ clickCount: 3 });
+            await page.keyboard.press('Backspace');
+  
             await commentInput.type(comment, { delay: 50 });
             console.log(`[fillForm] Lần ${i}: Đã điền giá trị vào textarea#comment`);
             foundComment = true;
@@ -29,24 +34,10 @@ async function fillForm(page, { author, email, comment, website }) {
           lastError = e;
           console.warn(`[fillForm] Lần ${i}: ${e.message}`);
           console.log('[fillForm] Cuộn xuống cuối trang và đợi 500ms trước khi thử lại');
-          await page.evaluate(async () => {
-            await new Promise((resolve) => {
-              let totalHeight = 0;
-              const distance = 100;
-              const timer = setInterval(() => {
-                window.scrollBy(0, distance);
-                totalHeight += distance;
-          
-                if (totalHeight >= document.body.scrollHeight) {
-                  clearInterval(timer);
-                  resolve();
-                }
-              }, 100);
-            });
-          });
-          
+  
+          // Scroll xuống cuối trang bằng phím End thay vì evaluate
+          await page.keyboard.press('End');
           await delay(500);
-
         }
       }
   
@@ -62,7 +53,11 @@ async function fillForm(page, { author, email, comment, website }) {
           const input = await page.$(selector);
           if (input) {
             await input.focus();
-            await page.evaluate(el => el.value = '', input);
+  
+            // Xóa nội dung cũ bằng cách chọn hết rồi xóa
+            await input.click({ clickCount: 3 });
+            await page.keyboard.press('Backspace');
+  
             await input.type(value, { delay: 50 });
             console.log(`[fillForm] Đã điền giá trị vào ${name}`);
           } else {
