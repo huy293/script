@@ -5,8 +5,19 @@ async function fillForm(page, { author, email, comment, website }) {
       const setInputValue = async (selector, value) => {
         if (!value) return;
         await page.waitForSelector(selector, { timeout: 10000 });
-        const isDisabledOrReadOnly = await page.$eval(selector, el => el.disabled || el.readOnly);
-        if (isDisabledOrReadOnly) throw new Error(`${selector} bị disabled hoặc readonly`);
+  
+        // Kiểm tra disabled hoặc readonly an toàn
+        const isDisabledOrReadOnly = await page.evaluate((sel) => {
+          const el = document.querySelector(sel);
+          if (!el) return null; // chưa có element
+          return el.disabled || el.readOnly;
+        }, selector);
+  
+        if (isDisabledOrReadOnly === null) {
+          throw new Error(`${selector} chưa có trên DOM`);
+        } else if (isDisabledOrReadOnly) {
+          throw new Error(`${selector} bị disabled hoặc readonly`);
+        }
   
         await page.evaluate((sel, val) => {
           const element = document.querySelector(sel);
@@ -27,12 +38,11 @@ async function fillForm(page, { author, email, comment, website }) {
           lastError = e;
           console.log(`[fillForm] Lần ${i} chưa tìm thấy textarea#comment, sẽ cuộn xuống cuối trang và thử lại`);
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-          await page.waitForTimeout(1000);
+          await page.waitForTimeout(500); // đợi DOM ổn định hơn
         }
       }
       if (!foundComment) throw new Error(`[fillForm] Không tìm thấy textarea#comment sau 3 lần thử: ${lastError?.message}`);
   
-      // Điền các trường còn lại
       await setInputValue('input#author', author);
       await setInputValue('input#email', email);
   

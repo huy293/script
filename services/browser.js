@@ -14,7 +14,7 @@ async function launchBrowser() {
         '--window-size=1920,1080',
       ],
       timeout: 60000,          // Giảm timeout để tránh chờ quá lâu
-      protocolTimeout: 90000,  // Tăng nhẹ protocolTimeout nếu Railway yếu
+      protocolTimeout: 120000,  // Tăng nhẹ protocolTimeout nếu Railway yếu
     });
   } catch (error) {
     throw new Error(`[browser.js] Lỗi khi khởi tạo browser: ${error.message}`);
