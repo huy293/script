@@ -1,9 +1,5 @@
 const puppeteer = require('puppeteer');
 
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 async function postComment({ url, author, email, comment, website }) {
   let browser;
 
@@ -17,62 +13,76 @@ async function postComment({ url, author, email, comment, website }) {
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
       ],
-      timeout: 60000,        // 60s timeout khi khởi tạo browser
-      protocolTimeout: 60000 // timeout giao thức cũng 60s
+      timeout: 120000,
+      protocolTimeout: 120000,
     });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1000, height: 700 });
 
-    // Chặn các request tài nguyên không cần thiết để tiết kiệm tài nguyên
-    await page.setRequestInterception(true);
-    page.on('request', req => {
-      const blocked = ['image', 'stylesheet', 'font', 'media', 'script'];
-      if (blocked.includes(req.resourceType())) {
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
+    // Comment tạm thời đoạn setRequestInterception để test
+    // await page.setRequestInterception(true);
+    // page.on('request', req => {
+    //   const blocked = ['image', 'stylesheet', 'font', 'media', 'script'];
+    //   if (blocked.includes(req.resourceType())) {
+    //     req.abort();
+    //   } else {
+    //     req.continue();
+    //   }
+    // });
 
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
-    // Điền nội dung bình luận
-    await page.evaluate((comment) => {
+    // Kiểm tra selector textarea#comment
+    const hasComment = await page.$('textarea#comment');
+    if (!hasComment) throw new Error('Không tìm thấy textarea#comment');
+
+    await page.evaluate(comment => {
       const el = document.querySelector('textarea#comment');
-      if (el) {
-        el.value = comment;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+      el.value = comment;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
     }, comment);
 
-    // Hàm điền thông tin input an toàn
-    const safeSet = async (selector, value) => {
-      if (!value) return;
-      await page.evaluate((sel, val) => {
-        const el = document.querySelector(sel);
-        if (el) {
-          el.value = val;
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-          el.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }, selector, value);
-    };
+    if (author) {
+      const el = await page.$('input#author');
+      if (!el) throw new Error('Không tìm thấy input#author');
+      await page.evaluate(author => {
+        const el = document.querySelector('input#author');
+        el.value = author;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }, author);
+    }
 
-    await safeSet('input#author', author);
-    await safeSet('input#email', email);
-    await safeSet('input#url', website);
+    if (email) {
+      const el = await page.$('input#email');
+      if (!el) throw new Error('Không tìm thấy input#email');
+      await page.evaluate(email => {
+        const el = document.querySelector('input#email');
+        el.value = email;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }, email);
+    }
 
-    // Lấy nút submit (có thể là button hoặc input) và submit form
+    if (website) {
+      const el = await page.$('input#url');
+      if (!el) throw new Error('Không tìm thấy input#url');
+      await page.evaluate(website => {
+        const el = document.querySelector('input#url');
+        el.value = website;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }, website);
+    }
+
     const submitBtn = await page.$('button#submit, input#submit');
     if (!submitBtn) throw new Error('Không tìm thấy nút submit');
 
-    await submitBtn.focus();
-
     await Promise.all([
       submitBtn.click(),
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {})
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {}),
     ]);
 
     return { status: 'success', message: 'Đăng bình luận thành công' };
