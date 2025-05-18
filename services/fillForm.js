@@ -12,7 +12,7 @@ async function fillForm(page, { author, email, comment, website }) {
       for (let i = 1; i <= 3; i++) {
         try {
           console.log(`[fillForm] Lần ${i}: Chờ textarea#comment xuất hiện`);
-          await page.waitForSelector('textarea#comment', { timeout: 3000 });
+          await page.waitForSelector('textarea#comment', { timeout: 10000 });
           const commentInput = await page.$('textarea#comment');
   
           if (commentInput) {
@@ -29,7 +29,22 @@ async function fillForm(page, { author, email, comment, website }) {
           lastError = e;
           console.warn(`[fillForm] Lần ${i}: ${e.message}`);
           console.log('[fillForm] Cuộn xuống cuối trang và đợi 500ms trước khi thử lại');
-          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          await page.evaluate(async () => {
+            await new Promise((resolve) => {
+              let totalHeight = 0;
+              const distance = 100;
+              const timer = setInterval(() => {
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+          
+                if (totalHeight >= document.body.scrollHeight) {
+                  clearInterval(timer);
+                  resolve();
+                }
+              }, 100);
+            });
+          });
+          
           await delay(500);
 
         }
