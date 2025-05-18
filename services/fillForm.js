@@ -2,14 +2,12 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
-  async function autoScroll(page, times = 20, delay = 500) {
+  async function autoScroll(page, times = 20, delayMs = 500) {
     for (let i = 0; i < times; i++) {
       await page.keyboard.press('PageDown');
-      await delay(delay);
+      await delay(delayMs);
     }
   }
-  
-  
   
   async function fillInput(page, selector, value, name) {
     try {
