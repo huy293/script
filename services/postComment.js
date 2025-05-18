@@ -20,7 +20,7 @@ async function postComment({ url, author, email, comment, website }) {
     await setupRequestInterception(page);
 
     console.log('Đi tới trang:', url);
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
     console.log('Đợi 5 giây để trang load nội dung...');
     await delay(5000);
