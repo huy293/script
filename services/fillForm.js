@@ -56,7 +56,13 @@ async function fillForm(page, { author, email, comment, website }) {
         } catch (e) {
           lastError = e;
           console.log(`[fillForm] Lần ${i} chưa tìm thấy textarea#comment hoặc lỗi, sẽ cuộn xuống cuối trang và thử lại`);
-          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          await page.evaluate(() => {
+            console.log('Cuộn xuống cuối trang');
+            if (document && document.body) {
+              window.scrollTo(0, document.body.scrollHeight);
+            }
+          });
+          console.log('Đợi 500ms trước khi thử lại');
           await page.waitForTimeout(500);
         }
       }
