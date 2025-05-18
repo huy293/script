@@ -70,7 +70,7 @@ async function postComment({ url, author, email, comment, website }) {
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: [
         '--no-sandbox',                     // [Error-13]
         '--disable-setuid-sandbox',         // [Error-14]
