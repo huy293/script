@@ -1,5 +1,9 @@
 const puppeteer = require('puppeteer');
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function waitTillHTMLRendered(page, timeout = 15000) {
   const checkInterval = 500;
   const maxChecks = timeout / checkInterval;
@@ -18,7 +22,7 @@ async function waitTillHTMLRendered(page, timeout = 15000) {
       stableCount = 0;
       lastHTMLSize = currentHTMLSize;
     }
-    await page.waitForTimeout(checkInterval);
+    await wait(checkInterval);
   }
 }
 
@@ -32,7 +36,7 @@ async function waitForStableElement(page, selector, timeout = 5000, stableTimeMs
     const el = await page.$(selector);
     if (!el) {
       stableDuration = 0;
-      await page.waitForTimeout(pollInterval);
+      await wait(pollInterval);
       continue;
     }
 
@@ -40,7 +44,7 @@ async function waitForStableElement(page, selector, timeout = 5000, stableTimeMs
     const isDisabled = await page.evaluate(el => el.disabled, el);
     if (!box || isDisabled) {
       stableDuration = 0;
-      await page.waitForTimeout(pollInterval);
+      await wait(pollInterval);
       continue;
     }
 
@@ -58,7 +62,7 @@ async function waitForStableElement(page, selector, timeout = 5000, stableTimeMs
       lastBox = box;
     }
 
-    await page.waitForTimeout(pollInterval);
+    await wait(pollInterval);
   }
 
   throw new Error('Element không ổn định trong thời gian chờ');
@@ -90,7 +94,6 @@ async function postComment({ url, author, email, comment, website }) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await waitTillHTMLRendered(page);
 
-    // Điền nội dung bình luận
     await page.evaluate((comment) => {
       const el = document.querySelector('textarea#comment');
       if (el) {
@@ -100,7 +103,6 @@ async function postComment({ url, author, email, comment, website }) {
       }
     }, comment);
 
-    // Điền các field còn lại
     const safeSet = async (selector, value) => {
       if (!value) return;
       await page.evaluate((sel, val) => {
@@ -117,7 +119,6 @@ async function postComment({ url, author, email, comment, website }) {
     await safeSet('input#email', email);
     await safeSet('input#url', website);
 
-    // Gửi bình luận
     const submitBtn = await waitForStableElement(page, 'button#submit, input#submit');
     await submitBtn.focus();
 
