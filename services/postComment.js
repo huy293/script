@@ -17,8 +17,6 @@ async function postComment({ url, author, email, comment, website }) {
 
     console.log('Đi tới trang:', url);
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    const html = await page.content();
-    console.log('[DEBUG HTML]', html.slice(0, 1000)); // chỉ in phần đầu
     await fillForm(page, { author, email, comment, website });
 
     await submitForm(page);
