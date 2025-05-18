@@ -4,71 +4,6 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function waitTillHTMLRendered(page, timeout = 15000) {
-  const checkInterval = 500;
-  const maxChecks = timeout / checkInterval;
-  let lastHTMLSize = 0;
-  let stableCount = 0;
-  const minStableCount = 2;
-
-  for (let i = 0; i < maxChecks; i++) {
-    const html = await page.content();
-    const currentHTMLSize = html.length;
-
-    if (currentHTMLSize === lastHTMLSize) {
-      stableCount++;
-      if (stableCount >= minStableCount) break;
-    } else {
-      stableCount = 0;
-      lastHTMLSize = currentHTMLSize;
-    }
-
-    await wait(checkInterval);
-  }
-}
-
-async function waitForStableElement(page, selector, timeout = 5000, stableTimeMs = 1000) {
-  const pollInterval = 200;
-  const maxPolls = timeout / pollInterval;
-  let lastBox = null;
-  let stableDuration = 0;
-
-  for (let i = 0; i < maxPolls; i++) {
-    const el = await page.$(selector);
-    if (!el) {
-      stableDuration = 0;
-      await wait(pollInterval);
-      continue;
-    }
-
-    const box = await el.boundingBox();
-    const isDisabled = await page.evaluate(el => el.disabled, el);
-    if (!box || isDisabled) {
-      stableDuration = 0;
-      await wait(pollInterval);
-      continue;
-    }
-
-    if (
-      lastBox &&
-      box.x === lastBox.x &&
-      box.y === lastBox.y &&
-      box.width === lastBox.width &&
-      box.height === lastBox.height
-    ) {
-      stableDuration += pollInterval;
-      if (stableDuration >= stableTimeMs) return el;
-    } else {
-      stableDuration = 0;
-      lastBox = box;
-    }
-
-    await wait(pollInterval);
-  }
-
-  throw new Error('Element không ổn định trong thời gian chờ');
-}
-
 async function postComment({ url, author, email, comment, website }) {
   let browser;
 
@@ -81,6 +16,7 @@ async function postComment({ url, author, email, comment, website }) {
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
+        '--window-size=1920,1080'
       ],
       protocolTimeout: 60000,
       timeout: 60000
@@ -99,8 +35,7 @@ async function postComment({ url, author, email, comment, website }) {
       }
     });
 
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await waitTillHTMLRendered(page);
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
 
     // Điền nội dung bình luận
     await page.evaluate((comment) => {
@@ -129,14 +64,18 @@ async function postComment({ url, author, email, comment, website }) {
     await safeSet('input#email', email);
     await safeSet('input#url', website);
 
-    // Chờ và submit
-    const submitBtn = await waitForStableElement(page, 'button#submit, input#submit');
-    await submitBtn.focus();
+    // Nhấn nút submit
+    const submitBtn = await page.$('button#submit, input#submit');
+    if (submitBtn) {
+      await submitBtn.focus();
 
-    await Promise.all([
-      page.keyboard.press('Enter'),
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {})
-    ]);
+      await Promise.all([
+        page.keyboard.press('Enter'),
+        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {})
+      ]);
+    } else {
+      throw new Error('Không tìm thấy nút Submit');
+    }
 
     return { status: 'success', message: 'Đăng bình luận thành công' };
   } catch (error) {
